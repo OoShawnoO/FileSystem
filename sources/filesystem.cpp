@@ -1,4 +1,4 @@
-#include "file.h"
+#include "filesystem.h"
 
 file_c::file_c(user_c user,string _name,unsigned char permission){
 
@@ -10,7 +10,4 @@ file_c::file_c(user_c user,string _name,unsigned char permission){
 
     name = _name;
 
-    attr_u.attr = permission;
-
-    // creater = user.getname();
 }

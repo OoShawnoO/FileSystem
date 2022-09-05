@@ -1,10 +1,17 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+enum FILETYPE{
+    BINARY = 0,
+    TEXT,
+    DIR,
+};
+
+
 /*
-    chdel    chexec    chwrite    chread    del    exec    write   read
-      0         0         0         0        0      0        0      0
-    128        64         32        16       8      4        2      1
+    预留      预留    chexec   chwrite  chread   exec    write   read
+    0         0         0         0        0      0        0      0
+    128       64        32        16       8      4        2      1
 */
 
 union attribute_u{
@@ -12,12 +19,11 @@ union attribute_u{
     struct{
         unsigned char read:1;       //读权限
         unsigned char write:1;      //写权限
-        unsigned char exec:1;       //执行权限
-        unsigned char del:1;        //删除权限     
+        unsigned char exec:1;       //执行权限     
         unsigned char chread:1;     //修改读权限
         unsigned char chwrite:1;    //修改写权限
         unsigned char chexec:1;     //修改执行权限
-        unsigned char chdel:1;      //修改删除权限
+        unsigned char reserve:2;    //预留
     }attr_s;
 };
 

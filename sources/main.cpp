@@ -9,37 +9,6 @@
 //完成系统的 总控模块编程和各个操作模块编程。上机测试各个模块，没执行一个操作，打印有关数据结构的内容
 //判断操作的正确性。 
 
-// 清除屏幕
-#define CLEAR() printf("\033[2J")
-
-// 上移光标
-#define MOVEUP(x) printf("\033[%dA", (x))
-
-// 下移光标
-#define MOVEDOWN(x) printf("\033[%dB", (x))
-
-// 左移光标
-#define MOVELEFT(y) printf("\033[%dD", (y))
-
-// 右移光标
-#define MOVERIGHT(y) printf("\033[%dC",(y))
-
-// 定位光标
-#define MOVETO(x,y) printf("\033[%d;%dH", (x), (y))
-
-// 光标复位
-#define RESET_CURSOR() printf("\033[H")
-
-// 隐藏光标
-#define HIDE_CURSOR() printf("\033[?25l")
-
-// 显示光标
-#define SHOW_CURSOR() printf("\033[?25h")
-
-//反显
-#define HIGHT_LIGHT() printf("\033[7m")
-#define UN_HIGHT_LIGHT() printf("\033[27m")
-
 
 int main(){
     // printf("\e[32m%s\e[0m\n", "hello world");
@@ -48,12 +17,5 @@ int main(){
     attribute_u at;
     at.attr_s.read = 1;
     at.attr_s.write = 1;
-    at.attr_s.chdel = 1;
     printf("123 %u\n",at.attr);
-
-    SHOW_CURSOR();
-    MOVETO(0,2);
-    while(1){
-        MOVERIGHT(0);
-    }
 }
