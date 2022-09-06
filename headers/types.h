@@ -5,8 +5,13 @@ enum FILETYPE{
     BINARY = 0,
     TEXT,
     DIR,
+    UNKNOWN,
 };
 
+enum ERROR{
+    PERMISSION = 0,
+    NO,
+};
 
 /*
     预留      预留    chexec   chwrite  chread   exec    write   read
@@ -27,6 +32,15 @@ union attribute_u{
     }attr_s;
 };
 
+enum ATTRIBUTE{
+    READ = 0,
+    WRITE,
+    EXEC,
+    CHREAD,
+    CHWRITE,
+    CHEXEC,
+};
+
 
 /*
 显示方式
@@ -37,6 +51,9 @@ union attribute_u{
 
 背景色
 40（黑色）、41（红色）、42（绿色）、 43（黄色）、44（蓝色）、45（洋红）、46（青色）、47（白色）
+
+printf("\e[32m%s\e[0m\n", "hello world");
+cout << "\e["<< HIGHTLIGHT << ";" << F_CYAN << "m" << "hello world" << "\e[0m" << "123" <<endl;
 
 */
 
