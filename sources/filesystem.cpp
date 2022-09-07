@@ -129,10 +129,10 @@ bool filesystem_c::permission(user_c& user,ATTRIBUTE attr) const{
                         return false;
                 }
         }
-        if(user.get_uid() == ownerid){
+        if(user.get_uid() == ownerid || user.get_gid() == 1){
                 if(u) return true;
                 else return false;
-        }else if(user.get_gid() == ownergid){
+        }else if(user.get_gid() == ownergid || user.get_gid() == 1){
                 if(g) return true;
                 else return false;
         }else{
@@ -141,24 +141,52 @@ bool filesystem_c::permission(user_c& user,ATTRIBUTE attr) const{
         }
 }
 
-
-file_c::file_c(
-        const user_c& user,string name,
-        unsigned char owner_permission = 63,
-        unsigned char group_permission = 63,
-        unsigned char other_permission = 5
-):filesystem_c(name,owner_permission,group_permission,other_permission,user,UNKNOWN)
-{
-
+long filesystem_c::get_size() const{
+        return;
+}
+vector<string>& filesystem_c::get_mem(){
+        return;
+}
+map<string,filesystem_c*>& filesystem_c::get_contents(){
+        return;
 }
 
 
+file_c::file_c(
+        const user_c& user,string name,
+        unsigned char owner_permission,
+        unsigned char group_permission,
+        unsigned char other_permission
+):filesystem_c(name,owner_permission,group_permission,other_permission,user,UNKNOWN)
+{
+        mem = *(new vector<string>);
+}
+
+file_c::~file_c(){
+        delete &mem;
+}
+
+long file_c::get_size() const{
+        return size;
+}
+vector<string>& file_c::get_mem(){
+        return mem;
+}
+
 dir_c::dir_c(
         const user_c& user,string name,
-        unsigned char owner_permission = 63,
-        unsigned char group_permission = 63,
-        unsigned char other_permission = 5
+        unsigned char owner_permission,
+        unsigned char group_permission,
+        unsigned char other_permission
 ):filesystem_c(name,owner_permission,group_permission,other_permission,user,DIR)
 {
+        contents = *(new map<string,filesystem_c*>);
+}
 
+dir_c::~dir_c(){
+        delete &contents;
+}
+
+map<string,filesystem_c*>& dir_c::get_contents(){
+        return contents;
 }

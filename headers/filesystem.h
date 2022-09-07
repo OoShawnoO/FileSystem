@@ -4,13 +4,13 @@
 #include <time.h>
 #include <vector>
 #include <list>
+#include <map>
 #include "user.h"
-#include "types.h"
 
 using namespace std;
 
 class filesystem_c{
-protected:
+public:
     friend class user_c;
     filesystem_c(
         string _name,
@@ -34,41 +34,45 @@ protected:
     tm* update_time;            // 修改时间
     tm* visit_time;             // 访问时间
 
-    inline FILETYPE get_filetype() const;
-    inline attribute_u get_owner_permission() const;
-    inline attribute_u get_group_permission() const;
-    inline attribute_u get_other_permission() const;
-    inline string get_name() const;
-    inline unsigned char get_createid() const;
-    inline unsigned char get_ownerid() const;
-    inline unsigned char get_ownergid() const;
-    inline tm get_create_time() const;
-    inline tm get_update_time() const;
-    inline tm get_visit_time() const;
+    virtual inline FILETYPE get_filetype() const;
+    virtual inline attribute_u get_owner_permission() const;
+    virtual inline attribute_u get_group_permission() const;
+    virtual inline attribute_u get_other_permission() const;
+    virtual inline string get_name() const;
+    virtual inline unsigned char get_createid() const;
+    virtual inline unsigned char get_ownerid() const;
+    virtual inline unsigned char get_ownergid() const;
+    virtual inline tm get_create_time() const;
+    virtual inline tm get_update_time() const;
+    virtual inline tm get_visit_time() const;
 
-    void set_filetype(FILETYPE);
-    void set_filetype();
-    void set_owner_permission(attribute_u);
-    void set_owner_permission(unsigned char);
-    void set_group_permission(attribute_u);
-    void set_group_permission(unsigned char);
-    void set_other_permission(attribute_u);
-    void set_other_permission(unsigned char);
-    void set_name(string);
-    void set_createid(unsigned char);
-    void set_ownerid(unsigned char);
-    void set_ownergid(unsigned char);
-    void set_create_time(tm*);
-    void set_update_time(tm*);
-    void set_visit_time(tm*);
+    virtual void set_filetype(FILETYPE);
+    virtual void set_filetype();
+    virtual void set_owner_permission(attribute_u);
+    virtual void set_owner_permission(unsigned char);
+    virtual void set_group_permission(attribute_u);
+    virtual void set_group_permission(unsigned char);
+    virtual void set_other_permission(attribute_u);
+    virtual void set_other_permission(unsigned char);
+    virtual void set_name(string);
+    virtual void set_createid(unsigned char);
+    virtual void set_ownerid(unsigned char);
+    virtual void set_ownergid(unsigned char);
+    virtual void set_create_time(tm*);
+    virtual void set_update_time(tm*);
+    virtual void set_visit_time(tm*);
 
-    bool permission(user_c&,ATTRIBUTE) const;
+    virtual bool permission(user_c&,ATTRIBUTE) const;
+
+    virtual long get_size() const;
+    virtual vector<string>& get_mem();
+    virtual map<string,filesystem_c*>& get_contents();
 };
 
 class file_c:filesystem_c{
 private:
     long size;                  // 文件大小
-    vector<list<char>> memlist; //存储
+    vector<string> mem;         //存储 二进制base64_encode(data,sizeof(data)) 解码base64_encode(data,sizeof(data))
     
 public:
     file_c(
@@ -77,17 +81,22 @@ public:
         unsigned char group_permission = 63,
         unsigned char other_permission = 5);
     ~file_c();
+    long get_size() const;
+    vector<string>& get_mem();
 };
 
 class dir_c:filesystem_c{
 private:
-
+    map<string,filesystem_c*> contents;
 public:
     dir_c(const user_c& user,string name,
         unsigned char owner_permission = 63,
         unsigned char group_permission = 63,
         unsigned char other_permission = 5);
     ~dir_c();
+    map<string,filesystem_c*>& get_contents();
+    bool mkdir(string,...);
+    bool rmdir(string,...);
 
 };
 

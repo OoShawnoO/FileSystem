@@ -11,8 +11,6 @@
 
 
 int main(){
-    // printf("\e[32m%s\e[0m\n", "hello world");
-    // cout << "\e["<< HIGHTLIGHT << ";" << F_CYAN << "m" << "hello world" << "\e[0m" << "123" <<endl;
 
     attribute_u at;
     at.attr_s.read = 1;

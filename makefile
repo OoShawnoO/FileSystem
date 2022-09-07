@@ -11,3 +11,4 @@ $(target):$(objs)
 
 clean:
 	rm $(objs) -f
+	clear

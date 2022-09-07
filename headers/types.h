@@ -1,6 +1,11 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+class user_c;
+class filesystem_c;
+class dir_c;
+class file_c;
+
 enum FILETYPE{
     BINARY = 0,
     TEXT,
