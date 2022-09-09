@@ -1,6 +1,10 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+#include <iostream>
+#include <string>
+#include <vector>
+
 class user_c;
 class filesystem_c;
 class dir_c;

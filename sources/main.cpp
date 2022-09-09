@@ -9,11 +9,80 @@
 //完成系统的 总控模块编程和各个操作模块编程。上机测试各个模块，没执行一个操作，打印有关数据结构的内容
 //判断操作的正确性。 
 
-
 int main(){
+    
+    
+    user_c* user = new user_c("root");
 
-    attribute_u at;
-    at.attr_s.read = 1;
-    at.attr_s.write = 1;
-    printf("123 %u\n",at.attr);
+    users.push_back(*user);
+
+    bool right = true;
+
+    while(1){
+        cout << "\e["<< HIGHTLIGHT << ";" << F_CYAN << "m" << user->get_name() << ":" << "\e[0m";
+        getline(cin,cmd);
+        split(cmd,params);
+        cmd.clear();
+
+        string first = params[0];
+        params.erase(params.begin());
+
+        if(first == "pwd"){
+            user->pwd();
+            
+        }
+        else if(first == "ls"){
+            user->ls(params);
+        }
+        else if(first == "cd"){
+            user->cd(params);
+        }
+        else if(first == "mkdir"){
+            right = user->mkdir(params);
+        }
+        else if(first == "rmdir"){
+            right = user->rmdir(params);
+        }
+        else if(first == "touch"){
+            right = user->touch(params);
+        }
+        else if(first == "cp"){
+            user->cp(params);
+        }
+        else if(first == "rm"){
+            right = user->rm(params);
+        }
+        else if(first == "mv"){
+            right = user->mv(params);
+        }
+        else if(first == "cat"){
+            right = user->cat(params);
+        }
+        else if(first == "more"){
+            user->more(params);
+        }
+        else if(first == "less"){
+            user->less(params);
+        }
+        else if(first == "echo"){
+            user->echo(params);
+        }
+        else if(first == "head"){
+            right = user->head(params);
+        }
+        else if(first == "tail"){
+            right = user->tail(params);
+        }
+        else if(first == "dup2"){
+            right = user->dup2(params);
+        }else if(first == "ln"){
+            right = user->ln(params);
+        }
+        else if(first == "history"){
+            user->history(params);
+        }
+        else{
+            
+        }
+    }
 }

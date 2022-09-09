@@ -41,6 +41,10 @@ filesystem_c::filesystem_c(
         set_visit_time(t);
 }
 
+filesystem_c::~filesystem_c(){
+
+}
+
 inline FILETYPE filesystem_c::get_filetype() const{return type;}
 inline attribute_u filesystem_c::get_owner_permission() const{return owner_attr_u;}
 inline attribute_u filesystem_c::get_group_permission() const{return group_attr_u;}
@@ -52,6 +56,7 @@ inline unsigned char filesystem_c::get_ownergid() const{return ownergid;}
 inline tm filesystem_c::get_create_time() const{return *create_time;}
 inline tm filesystem_c::get_update_time() const{return *update_time;}
 inline tm filesystem_c::get_visit_time() const{return *visit_time;}
+inline filesystem_c* filesystem_c::get_parent(){return parent;}
 
 void filesystem_c::set_filetype(FILETYPE newtype){type = newtype;}
 void filesystem_c::set_filetype(){
@@ -79,6 +84,12 @@ void filesystem_c::set_ownergid(unsigned char gid){ownergid = gid;}
 void filesystem_c::set_create_time(tm* newcreatetime){*create_time = *newcreatetime;}
 void filesystem_c::set_update_time(tm* newupdatetime){*update_time = *newupdatetime;}
 void filesystem_c::set_visit_time(tm* newvisittime){*visit_time = *newvisittime;}
+void filesystem_c::set_parent(filesystem_c* _parent){
+        parent->get_contents().erase(this->get_name()) ;
+        parent = _parent;
+        parent->get_contents()[get_name()] = this;
+}
+
 
 /*
         if(user.get_uid() == ownerid){
@@ -142,13 +153,13 @@ bool filesystem_c::permission(user_c& user,ATTRIBUTE attr) const{
 }
 
 long filesystem_c::get_size() const{
-        return;
+        
 }
 vector<string>& filesystem_c::get_mem(){
-        return;
+        
 }
 map<string,filesystem_c*>& filesystem_c::get_contents(){
-        return;
+
 }
 
 
@@ -181,6 +192,13 @@ dir_c::dir_c(
 ):filesystem_c(name,owner_permission,group_permission,other_permission,user,DIR)
 {
         contents = *(new map<string,filesystem_c*>);
+        contents["."] = this;
+        if(this->get_name() == "/"){
+                contents[".."] = this;
+        }else{
+                contents[".."] = this->parent;
+        }
+        
 }
 
 dir_c::~dir_c(){

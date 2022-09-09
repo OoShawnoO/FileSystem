@@ -1,13 +1,14 @@
 #ifndef FILE_H
 #define FILE_H
-#include <string>
+
 #include <time.h>
-#include <vector>
 #include <list>
 #include <map>
+#include "types.h"
 #include "user.h"
 
 using namespace std;
+
 
 class filesystem_c{
 public:
@@ -33,6 +34,7 @@ public:
     tm* create_time;            // 创建时间
     tm* update_time;            // 修改时间
     tm* visit_time;             // 访问时间
+    filesystem_c* parent;       // 上级目录
 
     virtual inline FILETYPE get_filetype() const;
     virtual inline attribute_u get_owner_permission() const;
@@ -45,6 +47,7 @@ public:
     virtual inline tm get_create_time() const;
     virtual inline tm get_update_time() const;
     virtual inline tm get_visit_time() const;
+    virtual inline filesystem_c* get_parent();
 
     virtual void set_filetype(FILETYPE);
     virtual void set_filetype();
@@ -61,6 +64,7 @@ public:
     virtual void set_create_time(tm*);
     virtual void set_update_time(tm*);
     virtual void set_visit_time(tm*);
+    virtual void set_parent(filesystem_c*);
 
     virtual bool permission(user_c&,ATTRIBUTE) const;
 
@@ -95,9 +99,6 @@ public:
         unsigned char other_permission = 5);
     ~dir_c();
     map<string,filesystem_c*>& get_contents();
-    bool mkdir(string,...);
-    bool rmdir(string,...);
-
 };
 
 
