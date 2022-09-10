@@ -3,7 +3,14 @@
 
 #include <iostream>
 #include <string>
+#include <map>
 #include <vector>
+
+using namespace std;
+
+void color_cout(int layout,int color,string s);
+void split(const string& str,vector<string>& res);
+void uerror(ERROR);
 
 class user_c;
 class filesystem_c;
@@ -61,11 +68,9 @@ enum ATTRIBUTE{
 背景色
 40（黑色）、41（红色）、42（绿色）、 43（黄色）、44（蓝色）、45（洋红）、46（青色）、47（白色）
 
-printf("\e[32m%s\e[0m\n", "hello world");
-cout << "\e["<< HIGHTLIGHT << ";" << F_CYAN << "m" << "hello world" << "\e[0m" << "123" <<endl;
-
 */
 
+/* LAYOUT TYPE */
 #define DEFAULT 0
 #define HIGHTLIGHT 1
 #define NOBOLd 22
@@ -73,7 +78,7 @@ cout << "\e["<< HIGHTLIGHT << ";" << F_CYAN << "m" << "hello world" << "\e[0m" <
 #define NOUNDERLINE 24
 #define BLING 5
 #define NOBLING 25
-
+/* FONT COLOR TYPE */
 #define F_BLACK 30
 #define F_RED 31
 #define F_GREEN 32
@@ -82,7 +87,7 @@ cout << "\e["<< HIGHTLIGHT << ";" << F_CYAN << "m" << "hello world" << "\e[0m" <
 #define F_MAGENTA 35
 #define F_CYAN 36
 #define F_WHITE 37
-
+/* BACKGROUND COLOR TYPE*/
 #define B_BLACK 40
 #define B_RED 41
 #define B_GREEN 42
@@ -91,5 +96,6 @@ cout << "\e["<< HIGHTLIGHT << ";" << F_CYAN << "m" << "hello world" << "\e[0m" <
 #define B_MAGENTA 45
 #define B_CYAN 46
 #define B_WHITE 47
+
 
 #endif

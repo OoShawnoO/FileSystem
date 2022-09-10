@@ -21,7 +21,7 @@ filesystem_c::filesystem_c(
         unsigned char owenr,
         unsigned char group,
         unsigned char other,
-        const user_c user,
+        const user_c* user,
         FILETYPE _type
 ){      
         name = _name;
@@ -30,8 +30,8 @@ filesystem_c::filesystem_c(
         set_owner_permission(owenr);
         set_group_permission(group);
         set_other_permission(other);
-        set_createid(user.get_uid());
-        set_ownerid(user.get_uid());
+        set_createid(user->get_uid());
+        set_ownerid(user->get_uid());
         tm* t = get_time();
         create_time = new tm;
         update_time = new tm;
@@ -103,47 +103,54 @@ void filesystem_c::set_parent(filesystem_c* _parent){
                 else return false;
         }
 */
-bool filesystem_c::permission(user_c& user,ATTRIBUTE attr) const{
-        unsigned char u,g,o;
+bool filesystem_c::permission(user_c* user,ATTRIBUTE attr) const{
+        unsigned char u = 0,g = 0,o = 0;
         switch(attr){
                 case READ : {
                         u = owner_attr_u.attr_s.read;
                         g = group_attr_u.attr_s.read;
                         o = other_attr_u.attr_s.read;
+                        break;
                 }
                 case WRITE : {
                         u = owner_attr_u.attr_s.write;
                         g = group_attr_u.attr_s.write;
                         o = other_attr_u.attr_s.write;
+                        break;
                 }
                 case EXEC : {
                         u = owner_attr_u.attr_s.exec;
                         g = group_attr_u.attr_s.exec;
                         o = other_attr_u.attr_s.exec;
+                        break;
                 }
                 case CHREAD : {
                         u = owner_attr_u.attr_s.chread;
                         g = group_attr_u.attr_s.chread;
                         o = other_attr_u.attr_s.chread;
+                        break;
                 }
                 case CHWRITE : {
                         u = owner_attr_u.attr_s.chwrite;
                         g = group_attr_u.attr_s.chwrite;
                         o = other_attr_u.attr_s.chwrite;
+                        break;
                 }
                 case CHEXEC : {
                         u = owner_attr_u.attr_s.chexec;
                         g = group_attr_u.attr_s.chexec;
                         o = other_attr_u.attr_s.chexec;
+                        break;
                 }
                 default : {
                         return false;
                 }
         }
-        if(user.get_uid() == ownerid || user.get_gid() == 1){
+
+        if(user->get_uid() == ownerid || user->get_gid() == 1){
                 if(u) return true;
                 else return false;
-        }else if(user.get_gid() == ownergid || user.get_gid() == 1){
+        }else if(user->get_gid() == ownergid || user->get_gid() == 1){
                 if(g) return true;
                 else return false;
         }else{
@@ -164,7 +171,7 @@ map<string,filesystem_c*>& filesystem_c::get_contents(){
 
 
 file_c::file_c(
-        const user_c& user,string name,
+        user_c* user,string name,
         unsigned char owner_permission,
         unsigned char group_permission,
         unsigned char other_permission
@@ -185,7 +192,7 @@ vector<string>& file_c::get_mem(){
 }
 
 dir_c::dir_c(
-        const user_c& user,string name,
+        user_c* user,string name,
         unsigned char owner_permission,
         unsigned char group_permission,
         unsigned char other_permission
@@ -194,10 +201,13 @@ dir_c::dir_c(
         contents = *(new map<string,filesystem_c*>);
         contents["."] = this;
         if(this->get_name() == "/"){
+                parent = nullptr;
                 contents[".."] = this;
         }else{
-                contents[".."] = this->parent;
+                parent = user->get_current_dir();
+                contents[".."] = parent;
         }
+        
         
 }
 

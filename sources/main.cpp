@@ -11,78 +11,36 @@
 
 int main(){
     
-    
     user_c* user = new user_c("root");
 
-    users.push_back(*user);
+    dir_c* dir = new dir_c(user,"/");
+
+    user->set_current_dir(dir);
+
+    dir->get_contents()["file1"] = (filesystem_c*) new file_c(user,"file1");
+
+    dir->get_contents()["dir1"] = (filesystem_c*) new dir_c(user,"dir1");
+
+    users.push_back(user);
 
     bool right = true;
 
     while(1){
-        cout << "\e["<< HIGHTLIGHT << ";" << F_CYAN << "m" << user->get_name() << ":" << "\e[0m";
+        uerror(user->get_error());
+
+        color_cout(HIGHTLIGHT,F_CYAN,user->get_name()+":");
         getline(cin,cmd);
         split(cmd,params);
         cmd.clear();
 
         string first = params[0];
         params.erase(params.begin());
-
-        if(first == "pwd"){
-            user->pwd();
-            
+        if(user->functions.count(first)){
+            auto func = user->functions[first];
+            (user->*func)(params);
+        }else{
+            cout << "Error cmd." <<endl;
         }
-        else if(first == "ls"){
-            user->ls(params);
-        }
-        else if(first == "cd"){
-            user->cd(params);
-        }
-        else if(first == "mkdir"){
-            right = user->mkdir(params);
-        }
-        else if(first == "rmdir"){
-            right = user->rmdir(params);
-        }
-        else if(first == "touch"){
-            right = user->touch(params);
-        }
-        else if(first == "cp"){
-            user->cp(params);
-        }
-        else if(first == "rm"){
-            right = user->rm(params);
-        }
-        else if(first == "mv"){
-            right = user->mv(params);
-        }
-        else if(first == "cat"){
-            right = user->cat(params);
-        }
-        else if(first == "more"){
-            user->more(params);
-        }
-        else if(first == "less"){
-            user->less(params);
-        }
-        else if(first == "echo"){
-            user->echo(params);
-        }
-        else if(first == "head"){
-            right = user->head(params);
-        }
-        else if(first == "tail"){
-            right = user->tail(params);
-        }
-        else if(first == "dup2"){
-            right = user->dup2(params);
-        }else if(first == "ln"){
-            right = user->ln(params);
-        }
-        else if(first == "history"){
-            user->history(params);
-        }
-        else{
-            
-        }
+        params.clear();
     }
 }

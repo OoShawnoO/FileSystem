@@ -3,7 +3,6 @@
 
 #include <time.h>
 #include <list>
-#include <map>
 #include "types.h"
 #include "user.h"
 
@@ -18,7 +17,7 @@ public:
         unsigned char owenr,
         unsigned char group,
         unsigned char other,
-        const user_c user,
+        const user_c* user,
         FILETYPE type
         );
     ~filesystem_c();
@@ -66,7 +65,7 @@ public:
     virtual void set_visit_time(tm*);
     virtual void set_parent(filesystem_c*);
 
-    virtual bool permission(user_c&,ATTRIBUTE) const;
+    virtual bool permission(user_c*,ATTRIBUTE) const;
 
     virtual long get_size() const;
     virtual vector<string>& get_mem();
@@ -80,7 +79,7 @@ private:
     
 public:
     file_c(
-        const user_c& user,string name,
+        user_c* user,string name,
         unsigned char owner_permission = 63,
         unsigned char group_permission = 63,
         unsigned char other_permission = 5);
@@ -93,7 +92,8 @@ class dir_c:filesystem_c{
 private:
     map<string,filesystem_c*> contents;
 public:
-    dir_c(const user_c& user,string name,
+    dir_c(
+        user_c* user,string name,
         unsigned char owner_permission = 63,
         unsigned char group_permission = 63,
         unsigned char other_permission = 5);
