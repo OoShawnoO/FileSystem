@@ -9,14 +9,19 @@ string cmd;
 vector<string> params;
 vector<user_c*> users;
 
-void split(const string& str,vector<string>& res){
-    string strs = str + ' ';
-    int pos = strs.find(' ');
+user_c* user = new user_c("root");
+
+dir_c* root = new dir_c(user,"/",NULL);
+
+
+void split(const string& str,char splitchar,vector<string>& res){
+    string strs = str + splitchar;
+    int pos = strs.find(splitchar);
     while(pos != string::npos){
         string temp = strs.substr(0,pos);
         res.push_back(temp);
         strs = strs.substr(pos+1);
-        pos = strs.find(' ');
+        pos = strs.find(splitchar);
     }
 }
 

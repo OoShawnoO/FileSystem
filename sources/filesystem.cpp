@@ -18,6 +18,7 @@ tm* get_time(){
 
 filesystem_c::filesystem_c(
         string _name,
+        filesystem_c* parent,
         unsigned char owenr,
         unsigned char group,
         unsigned char other,
@@ -39,10 +40,25 @@ filesystem_c::filesystem_c(
         set_create_time(t);
         set_update_time(t);
         set_visit_time(t);
+        set_parent(parent);
 }
 
-filesystem_c::~filesystem_c(){
-
+filesystem_c::filesystem_c(const filesystem_c& filesystem){
+        create_time = new tm;
+        update_time = new tm;
+        visit_time = new tm;
+        create_time = filesystem.create_time;
+        update_time = filesystem.update_time;
+        visit_time = filesystem.visit_time;
+        type = filesystem.type;
+        owner_attr_u = filesystem.owner_attr_u;
+        group_attr_u = filesystem.group_attr_u;
+        other_attr_u = filesystem.other_attr_u;
+        name = filesystem.name;
+        createrid = filesystem.createrid;
+        ownerid = filesystem.ownerid;
+        ownergid = filesystem.ownergid;
+        parent = filesystem.parent;
 }
 
 inline FILETYPE filesystem_c::get_filetype() const{return type;}
@@ -85,9 +101,13 @@ void filesystem_c::set_create_time(tm* newcreatetime){*create_time = *newcreatet
 void filesystem_c::set_update_time(tm* newupdatetime){*update_time = *newupdatetime;}
 void filesystem_c::set_visit_time(tm* newvisittime){*visit_time = *newvisittime;}
 void filesystem_c::set_parent(filesystem_c* _parent){
-        parent->get_contents().erase(this->get_name()) ;
-        parent = _parent;
-        parent->get_contents()[get_name()] = this;
+        if(parent!=NULL){
+                ((dir_c*)parent)->get_contents().erase(this->get_name()) ;
+                parent = _parent;
+                ((dir_c*)parent)->get_contents()[get_name()] = this;
+        }else{
+                parent = _parent;
+        }  
 }
 
 
@@ -159,25 +179,26 @@ bool filesystem_c::permission(user_c* user,ATTRIBUTE attr) const{
         }
 }
 
-long filesystem_c::get_size() const{
-        
-}
-vector<string>& filesystem_c::get_mem(){
-        
-}
-map<string,filesystem_c*>& filesystem_c::get_contents(){
-
-}
 
 
 file_c::file_c(
-        user_c* user,string name,
+        user_c* user,string name,filesystem_c* parent,
         unsigned char owner_permission,
         unsigned char group_permission,
         unsigned char other_permission
-):filesystem_c(name,owner_permission,group_permission,other_permission,user,UNKNOWN)
+):filesystem_c(name,parent,owner_permission,group_permission,other_permission,user,UNKNOWN)
 {
-        mem = *(new vector<string>);
+        ptr_mem = new vector<string>;
+        mem = *ptr_mem;
+        ((dir_c*)parent)->get_contents()[name] = this;
+}
+
+file_c::file_c(const file_c& file):filesystem_c(file)
+{       
+        size = file.size;
+        ptr_mem = new vector<string>;
+        mem = *ptr_mem;
+        mem = file.mem;
 }
 
 file_c::~file_c(){
@@ -192,27 +213,29 @@ vector<string>& file_c::get_mem(){
 }
 
 dir_c::dir_c(
-        user_c* user,string name,
+        user_c* user,string name,filesystem_c* parent,
         unsigned char owner_permission,
         unsigned char group_permission,
         unsigned char other_permission
-):filesystem_c(name,owner_permission,group_permission,other_permission,user,DIR)
+):filesystem_c(name,parent,owner_permission,group_permission,other_permission,user,DIR)
 {
-        contents = *(new map<string,filesystem_c*>);
+        ptr_contents = new map<string,filesystem_c*>;
+        contents = *ptr_contents;
         contents["."] = this;
-        if(this->get_name() == "/"){
-                parent = nullptr;
+        if(parent == NULL){
                 contents[".."] = this;
         }else{
-                parent = user->get_current_dir();
-                contents[".."] = parent;
+                contents[".."] = (filesystem_c*)this->get_parent();
+                ((dir_c*)parent)->get_contents()[name] = this;
         }
-        
-        
 }
 
-dir_c::~dir_c(){
-        delete &contents;
+dir_c::dir_c(const dir_c& dir):filesystem_c(dir)
+{
+        ptr_contents = new map<string,filesystem_c*>;
+        contents = *ptr_contents;
+        contents = dir.contents;
+
 }
 
 map<string,filesystem_c*>& dir_c::get_contents(){

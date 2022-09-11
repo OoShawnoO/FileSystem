@@ -48,9 +48,13 @@ bool user_c::set_gid(unsigned char _gid,user_c& user){if(gid == 1){user.gid = _g
 void user_c::set_error(ERROR _error){error = _error;}
 void user_c::set_current_dir(dir_c* dir){current_dir = dir;}
 
+extern dir_c* root;
+extern user_c* user;
+
 //（1）pwd - 显示当前目录的绝对路径
 bool user_c::pwd(vector<string>&){
     auto dir = (filesystem_c*)current_dir;
+    if((dir_c*)dir == root){cout << "/" << endl; return true;}
     vector<string> v;
     while(dir->get_name() != "/"){
         v.push_back(dir->get_name());
@@ -63,7 +67,7 @@ bool user_c::pwd(vector<string>&){
     cout << endl;
 }
 //（2）ls - 显示当前路径下的文件和目录
-bool user_c::ls(vector<string>&){
+bool user_c::ls(vector<string>& args){
     for(auto x : get_current_dir()->get_contents()){
         switch(x.second->get_filetype()){
             case DIR : {
@@ -79,7 +83,7 @@ bool user_c::ls(vector<string>&){
                 break;
             }
             default : {
-                cout << x.first;
+                color_cout(HIGHTLIGHT,F_MAGENTA,x.first);
                 break;
             }
         }
@@ -89,70 +93,193 @@ bool user_c::ls(vector<string>&){
 }
 //（3）cd - 切换至指定目录
 bool user_c::cd(vector<string>& args){
-    auto filesystem = current_dir->get_contents()[args[0]];
-    if(filesystem->permission(this,READ)){
-        current_dir = (dir_c*)filesystem;
-    }else{
-        set_error(PERMISSION);
+    auto pos = get_current_dir();
+    vector<string> vc;
+    switch(args[0][0]){
+        case '/' : {
+            pos = root;
+            args[0].erase(0,1);
+            split(args[0],'/',vc);
+            break;
+        }
+        case '.' : {
+            if(args[0][1] == '.' && args[0].size() > 2){
+                pos = (dir_c*)(((filesystem_c*)pos)->get_parent());
+                args[0].erase(0,3);
+                split(args[0],'/',vc);
+            }else if(args[0][1] == '.'){
+                pos = (dir_c*)(((filesystem_c*)pos)->get_parent());
+            }else{
+                args[0].erase(0,2);
+                split(args[0],'/',vc);
+            }
+            break;
+        }
+        default : {
+            split(args[0],'/',vc);
+            break;
+        }
     }
+    for(auto x : vc){
+        char a = x.c_str()[0];
+        if(a == NULL){
+            break;
+        }
+
+        if(pos->get_contents().find(x)!=pos->get_contents().end()){
+            if(pos->get_contents()[x]->get_filetype() == DIR){
+                pos = (dir_c*)pos->get_contents()[x];
+            }else{
+                cout << "NOT DIR" <<endl;
+                set_error(NOTDIR);
+            } 
+        }else{
+            cout << "NOT FOUND" <<endl;
+            set_error(NOTFOUND);
+        }
+    }
+    if(get_error() == NO){
+        set_current_dir(pos);
+        return true;
+    }else{
+        return false;
+    }
+    
 }
 //（4）mkdir - 创建目录
-bool user_c::mkdir(vector<string>&){
+bool user_c::mkdir(vector<string>& args){
+    auto dir = get_current_dir();
+    string name = args[0];
+    if(args[0].find("/")!=string::npos){
+        name = args[0].substr(args[0].rfind("/")+1);
+        args[0] = args[0].substr(0,args[0].rfind("/"));
 
+        if(cd(args)){
+            if(((filesystem_c*)get_current_dir())->permission(this,WRITE)){
+                dir_c* newdir = new dir_c(this,name,(filesystem_c*)this->get_current_dir());
+                set_current_dir(dir);
+                return true;
+            }else{
+                set_error(PERMISSION);
+                return false;
+            }
+        }else{
+            return false;
+        }
+    }else{
+        if(((filesystem_c*)dir)->permission(this,WRITE)){
+            dir_c* newdir = new dir_c(this,name,(filesystem_c*)this->get_current_dir());
+            return true;
+        }else{
+                set_error(PERMISSION);
+                return false;
+        }
+    }
 }
 //（5）rmdir - 删除目录(空目录)
-bool user_c::rmdir(vector<string>&){
-
+bool user_c::rmdir(vector<string>& args){
+    auto dir = get_current_dir();
+    string name = args[0];
+    if(args[0].find("/")!=string::npos){
+        name = args[0].substr(args[0].rfind("/")+1);
+        args[0] = args[0].substr(0,args[0].rfind("/"));
+        if(cd(args)){
+            if(((filesystem_c*)get_current_dir())->permission(this,WRITE)){
+                delete dynamic_cast<dir_c*>(get_current_dir()->get_contents()[name]);
+                set_current_dir(dir);
+                return true;
+            }else{
+                set_error(PERMISSION);
+                return false;
+            }
+        }else{
+            return false;
+        }
+    }else{
+        if(((filesystem_c*)dir)->permission(this,WRITE)){
+            delete dynamic_cast<dir_c*>(get_current_dir()->get_contents()[name]);
+            return true;
+        }else{
+                set_error(PERMISSION);
+                return false;
+        }
+    }
 }
 //（6）touch - 创建空文件
-bool user_c::touch(vector<string>&){
+bool user_c::touch(vector<string>& args){
+    auto dir = get_current_dir();
+    string name = args[0];
+    if(args[0].find("/")!=string::npos){
+        name = args[0].substr(args[0].rfind("/")+1);
+        args[0] = args[0].substr(0,args[0].rfind("/"));
 
+        if(cd(args)){
+            if(((filesystem_c*)get_current_dir())->permission(this,WRITE)){
+                file_c* newfile = new file_c(this,name,(filesystem_c*)this->get_current_dir());
+                set_current_dir(dir);
+                return true;
+            }else{
+                set_error(PERMISSION);
+                return false;
+            }
+        }else{
+            return false;
+        }
+    }else{
+        if(((filesystem_c*)dir)->permission(this,WRITE)){
+            file_c* newfile = new file_c(this,name,(filesystem_c*)this->get_current_dir());
+            return true;
+        }else{
+                set_error(PERMISSION);
+                return false;
+        }
+    }
 }
 //（7）cp - 拷贝文件或目录到指定文件或目录
-bool user_c::cp(vector<string>&){
+bool user_c::cp(vector<string>& args){
 
 }
 //（8）rm - 删除文件或目录
-bool user_c::rm(vector<string>&){
+bool user_c::rm(vector<string>& args){
 
 }
 //（9）mv - 移动文件与目录或重命名
-bool user_c::mv(vector<string>&){
+bool user_c::mv(vector<string>& args){
 
 }
 //（10）cat - 查看文件内容
-bool user_c::cat(vector<string>&){
+bool user_c::cat(vector<string>& args){
 
 }
 //（11）more - 文本过滤器
-bool user_c::more(vector<string>&){
+bool user_c::more(vector<string>& args){
 
 }
 //（12）less - 分屏查看文件内容
-bool user_c::less(vector<string>&){
+bool user_c::less(vector<string>& args){
 
 }
 //（13）echo - 输出内容到控制台
-bool user_c::echo(vector<string>&){
+bool user_c::echo(vector<string>& args){
 
 }
 //（14）head - 显示文件开头部分
-bool user_c::head(vector<string>&){
+bool user_c::head(vector<string>& args){
 
 }
 //（15）tail - 显示文件尾部的部分
-bool user_c::tail(vector<string>&){
+bool user_c::tail(vector<string>& args){
 
 }
 //（16）> / >> - 输出重定向/追加
-bool user_c::dup2(vector<string>&){
+bool user_c::dup2(vector<string>& args){
 
 }
 //（17）ln - 软链接
-bool user_c::ln(vector<string>&){
+bool user_c::ln(vector<string>& args){
 
 }
 //（18）history - 查看执行过的的历史命令
-bool user_c::history(vector<string>&){
+bool user_c::history(vector<string>& args){
     
 }

@@ -8,14 +8,13 @@
 
 using namespace std;
 
-void color_cout(int layout,int color,string s);
-void split(const string& str,vector<string>& res);
-void uerror(ERROR);
-
 class user_c;
 class filesystem_c;
 class dir_c;
 class file_c;
+
+extern dir_c* root;
+extern user_c* user;
 
 enum FILETYPE{
     BINARY = 0,
@@ -27,6 +26,8 @@ enum FILETYPE{
 enum ERROR{
     PERMISSION = 0,
     NO,
+    NOTDIR,
+    NOTFOUND,
 };
 
 /*
@@ -97,5 +98,8 @@ enum ATTRIBUTE{
 #define B_CYAN 46
 #define B_WHITE 47
 
+void color_cout(int layout,int color,string s);
+void split(const string& str,char splitchar,vector<string>& res);
+void uerror(ERROR);
 
 #endif

@@ -11,26 +11,22 @@
 
 int main(){
     
-    user_c* user = new user_c("root");
+    user->set_current_dir(root);
 
-    dir_c* dir = new dir_c(user,"/");
+    root->get_contents()["file1"] = (filesystem_c*) new file_c(user,"file1",(filesystem_c*)root);
 
-    user->set_current_dir(dir);
-
-    dir->get_contents()["file1"] = (filesystem_c*) new file_c(user,"file1");
-
-    dir->get_contents()["dir1"] = (filesystem_c*) new dir_c(user,"dir1");
+    root->get_contents()["dir1"] = (filesystem_c*) new dir_c(user,"dir1",(filesystem_c*)root);
 
     users.push_back(user);
 
     bool right = true;
 
     while(1){
-        uerror(user->get_error());
+        
 
         color_cout(HIGHTLIGHT,F_CYAN,user->get_name()+":");
         getline(cin,cmd);
-        split(cmd,params);
+        split(cmd,' ',params);
         cmd.clear();
 
         string first = params[0];
@@ -41,6 +37,7 @@ int main(){
         }else{
             cout << "Error cmd." <<endl;
         }
+        uerror(user->get_error());
         params.clear();
     }
 }
