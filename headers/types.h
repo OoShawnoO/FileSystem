@@ -13,21 +13,24 @@ class filesystem_c;
 class dir_c;
 class file_c;
 
-extern dir_c* root;
-extern user_c* user;
+extern dir_c *root;
+extern user_c *user;
 
-enum FILETYPE{
+enum FILETYPE
+{
     BINARY = 0,
     TEXT,
     DIR,
     UNKNOWN,
 };
 
-enum ERROR{
+enum ERROR
+{
     PERMISSION = 0,
     NO,
     NOTDIR,
     NOTFOUND,
+    CMD,
 };
 
 /*
@@ -36,20 +39,23 @@ enum ERROR{
     128       64        32        16       8      4        2      1
 */
 
-union attribute_u{
+union attribute_u
+{
     unsigned char attr;
-    struct{
-        unsigned char read:1;       //读权限
-        unsigned char write:1;      //写权限
-        unsigned char exec:1;       //执行权限     
-        unsigned char chread:1;     //修改读权限
-        unsigned char chwrite:1;    //修改写权限
-        unsigned char chexec:1;     //修改执行权限
-        unsigned char reserve:2;    //预留
-    }attr_s;
+    struct
+    {
+        unsigned char read : 1;    //读权限
+        unsigned char write : 1;   //写权限
+        unsigned char exec : 1;    //执行权限
+        unsigned char chread : 1;  //修改读权限
+        unsigned char chwrite : 1; //修改写权限
+        unsigned char chexec : 1;  //修改执行权限
+        unsigned char reserve : 2; //预留
+    } attr_s;
 };
 
-enum ATTRIBUTE{
+enum ATTRIBUTE
+{
     READ = 0,
     WRITE,
     EXEC,
@@ -57,7 +63,6 @@ enum ATTRIBUTE{
     CHWRITE,
     CHEXEC,
 };
-
 
 /*
 显示方式
@@ -98,8 +103,8 @@ enum ATTRIBUTE{
 #define B_CYAN 46
 #define B_WHITE 47
 
-void color_cout(int layout,int color,string s);
-void split(const string& str,char splitchar,vector<string>& res);
+void color_cout(int layout, int color, string s);
+void split(const string &str, char splitchar, vector<string> &res);
 void uerror(ERROR);
 
 #endif
