@@ -32,6 +32,8 @@ int main()
 
         string first = params[0];
         params.erase(params.begin());
+        // 这里使用到的是 策略模式 这种设计模式，原因是最开始的思路 if elseif 嵌套太多 可读性差 且 实用性不高。
+        // 将函数指针与cmd 进行分组 封装在一个 map 对象中，C++ map底层是红黑树 查询时间复杂度 O(log(n))
         if (user->functions.count(first))
         {
             auto func = user->functions[first];
