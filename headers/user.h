@@ -2,6 +2,7 @@
 #define USER_H
 
 #include "types.h"
+#include <functional>
 using namespace std;
 
 class user_c
@@ -42,7 +43,10 @@ public:
     bool ls(vector<string> &);
     //（3）cd - 切换至指定目录
     bool cd(vector<string> &);
+    // 以下函数重复代码过多 进行进一步封装
+    bool TEMP(vector<string>&,function<void(user_c*,string)>,function<void(user_c*,string)>);
     //（4）mkdir - 创建目录
+
     bool mkdir(vector<string> &);
     //（5）rmdir - 删除目录(空目录)
     bool rmdir(vector<string> &);
