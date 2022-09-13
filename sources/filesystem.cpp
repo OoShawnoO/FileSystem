@@ -117,14 +117,14 @@ void filesystem_c::set_parent(filesystem_c *_parent,bool flag)
 {
         if (parent != NULL && flag == true)
         {
-                ((dir_c *)parent)->get_contents().erase(this->get_name());
+                (dynamic_cast<dir_c*>(parent))->get_contents().erase(this->get_name());
                 parent = _parent;
-                ((dir_c *)parent)->get_contents()[get_name()] = this;
+                (dynamic_cast<dir_c*>(parent))->get_contents()[get_name()] = this;
         }
         else if(flag == false)
         {     
                 parent = _parent;
-                ((dir_c *)parent)->get_contents()[get_name()] = this;
+                (dynamic_cast<dir_c*>(parent))->get_contents()[get_name()] = this;
         }
         else{
                 parent = _parent;
@@ -225,9 +225,10 @@ file_c::file_c(
     unsigned char group_permission,
     unsigned char other_permission) : filesystem_c(name, parent, owner_permission, group_permission, other_permission, user, UNKNOWN)
 {
+        size = 0;
         ptr_mem = new vector<string>;
         mem = *ptr_mem;
-        ((dir_c *)parent)->get_contents()[name] = this;
+        (dynamic_cast<dir_c*>(parent))->get_contents()[name] = this;
 }
 
 file_c::file_c(const file_c &file) : filesystem_c(file)
@@ -236,11 +237,6 @@ file_c::file_c(const file_c &file) : filesystem_c(file)
         ptr_mem = new vector<string>;
         mem = *ptr_mem;
         mem = file.mem;
-}
-
-file_c::~file_c()
-{
-        delete &mem;
 }
 
 long file_c::get_size() const
@@ -260,15 +256,15 @@ dir_c::dir_c(
 {
         ptr_contents = new map<string, filesystem_c *>;
         contents = *ptr_contents;
-        contents["."] = this;
+        contents["."] = dynamic_cast<filesystem_c*>(this);
         if (parent == NULL)
         {
-                contents[".."] = this;
+                contents[".."] = dynamic_cast<filesystem_c*>(this);
         }
         else
         {
-                contents[".."] = (filesystem_c *)this->get_parent();
-                ((dir_c *)parent)->get_contents()[name] = this;
+                contents[".."] = dynamic_cast<filesystem_c*>(this->get_parent());
+                ( dynamic_cast<dir_c*>(parent))->get_contents()[name] = dynamic_cast<filesystem_c*>(this);
         }
 }
 
@@ -281,11 +277,11 @@ dir_c::dir_c(const dir_c &dir) : filesystem_c(dir)
         for(auto x : dir.contents){
                 if(x.first == "." || x.first == "..") continue;
                 if(x.second->get_filetype() == DIR){
-                        contents[x.first] =  (filesystem_c*)(new dir_c(*dynamic_cast<dir_c*>(x.second)));
+                        contents[x.first] =  dynamic_cast<filesystem_c*>(new dir_c(*dynamic_cast<dir_c*>(x.second)));
                 }else if(x.second->get_filetype() == BINARY
                 ||x.second->get_filetype() == TEXT
                 ||x.second->get_filetype() == UNKNOWN){
-                        contents[x.first] =  (filesystem_c*)(new file_c(*dynamic_cast<file_c*>(x.second)));
+                        contents[x.first] =  dynamic_cast<filesystem_c*>(new file_c(*dynamic_cast<file_c*>(x.second)));
                 }
         }
 }        

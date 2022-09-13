@@ -3,6 +3,7 @@
 
 #include <time.h>
 #include <list>
+#include <memory>
 #include "types.h"
 #include "user.h"
 
@@ -88,7 +89,10 @@ public:
         unsigned char group_permission = 63,
         unsigned char other_permission = 5);
     file_c(const file_c &file);
-    ~file_c();
+    ~file_c()
+    {
+        delete ptr_mem;
+    }
     long get_size() const;
     vector<string> &get_mem();
 };
@@ -108,7 +112,19 @@ public:
     dir_c(const dir_c &dir);
     ~dir_c()
     {
-        ((dir_c *)parent)->get_contents().erase(name);
+        (dynamic_cast<dir_c*>(parent))->get_contents().erase(name);
+        for(auto content : contents){
+            if(content.first == "." || content.first == "..") continue;
+
+            if(content.second->get_filetype() == DIR){
+                delete dynamic_cast<dir_c*>(content.second);
+            }else if(content.second->get_filetype() == BINARY
+            || content.second->get_filetype() == TEXT
+            || content.second->get_filetype() == UNKNOWN){
+                delete dynamic_cast<file_c*>(content.second);
+            }
+            
+        }
         delete ptr_contents;
     }
     map<string, filesystem_c *> &get_contents();

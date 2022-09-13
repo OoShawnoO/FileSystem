@@ -14,9 +14,9 @@ int main()
 
     user->set_current_dir(root);
 
-    root->get_contents()["file1"] = (filesystem_c *)new file_c(user, "file1", (filesystem_c *)root);
+    root->get_contents()["file1"] = dynamic_cast<filesystem_c*>(new file_c(user, "file1", dynamic_cast<filesystem_c*>(root)));
 
-    root->get_contents()["dir1"] = (filesystem_c *)new dir_c(user, "dir1", (filesystem_c *)root);
+    root->get_contents()["dir1"] = dynamic_cast<filesystem_c*>(new dir_c(user, "dir1", dynamic_cast<filesystem_c*>(root)));
 
     users.push_back(user);
 

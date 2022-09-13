@@ -115,8 +115,8 @@ extern user_c *user;
 //（1）pwd - 显示当前目录的绝对路径
 bool user_c::pwd(vector<string> &)
 {
-    auto dir = (filesystem_c *)current_dir;
-    if ((dir_c *)dir == root)
+    auto dir = dynamic_cast<filesystem_c*>(current_dir);
+    if (dynamic_cast<dir_c*>(dir) == root)
     {
         cout << "/" << endl;
         return true;
@@ -125,7 +125,7 @@ bool user_c::pwd(vector<string> &)
     while (dir->get_name() != "/")
     {
         v.push_back(dir->get_name());
-        dir = (filesystem_c *)dir->parent;
+        dir = dynamic_cast<filesystem_c*>(dir)->parent;
         v.push_back("/");
     }
     for (vector<string>::reverse_iterator it = v.rbegin(); it != v.rend(); it++)
@@ -184,13 +184,13 @@ bool user_c::cd(vector<string> &args)
     {
         if (args[0][1] == '.' && args[0].size() > 2)
         {
-            pos = (dir_c *)(((filesystem_c *)pos)->get_parent());
+            pos = dynamic_cast<dir_c*>(((dynamic_cast<filesystem_c*>(pos))->get_parent()));
             args[0].erase(0, 3);
             split(args[0], '/', vc);
         }
         else if (args[0][1] == '.')
         {
-            pos = (dir_c *)(((filesystem_c *)pos)->get_parent());
+            pos = dynamic_cast<dir_c*>(((dynamic_cast<filesystem_c*>(pos))->get_parent()));
         }
         else
         {
@@ -217,7 +217,7 @@ bool user_c::cd(vector<string> &args)
         {
             if (pos->get_contents()[x]->get_filetype() == DIR)
             {
-                pos = (dir_c *)pos->get_contents()[x];
+                pos = dynamic_cast<dir_c*>(pos->get_contents()[x]);
             }
             else
             {
@@ -251,9 +251,9 @@ bool user_c::mkdir(vector<string> &args)
 
         if (cd(args))
         {
-            if (((filesystem_c *)get_current_dir())->permission(this, WRITE))
+            if ((dynamic_cast<filesystem_c*>(get_current_dir()))->permission(this, WRITE))
             {
-                dir_c *newdir = new dir_c(this, name, (filesystem_c *)this->get_current_dir());
+                dir_c *newdir = new dir_c(this, name, dynamic_cast<filesystem_c*>(this->get_current_dir()));
                 set_current_dir(dir);
                 return true;
             }
@@ -270,9 +270,9 @@ bool user_c::mkdir(vector<string> &args)
     }
     else
     {
-        if (((filesystem_c *)dir)->permission(this, WRITE))
+        if ((dynamic_cast<filesystem_c*>(dir))->permission(this, WRITE))
         {
-            dir_c *newdir = new dir_c(this, name, (filesystem_c *)this->get_current_dir());
+            dir_c *newdir = new dir_c(this, name, dynamic_cast<filesystem_c*>(this->get_current_dir()));
             return true;
         }
         else
@@ -293,7 +293,7 @@ bool user_c::rmdir(vector<string> &args)
         args[0] = args[0].substr(0, args[0].rfind("/"));
         if (cd(args))
         {
-            if (((filesystem_c *)get_current_dir())->permission(this, WRITE))
+            if ((dynamic_cast<filesystem_c*>(get_current_dir()))->permission(this, WRITE))
             {
                 delete dynamic_cast<dir_c *>(get_current_dir()->get_contents()[name]);
                 set_current_dir(dir);
@@ -312,7 +312,7 @@ bool user_c::rmdir(vector<string> &args)
     }
     else
     {
-        if (((filesystem_c *)dir)->permission(this, WRITE))
+        if ((dynamic_cast<filesystem_c*>(dir))->permission(this, WRITE))
         {
             delete dynamic_cast<dir_c *>(get_current_dir()->get_contents()[name]);
             return true;
@@ -336,9 +336,9 @@ bool user_c::touch(vector<string> &args)
 
         if (cd(args))
         {
-            if (((filesystem_c *)get_current_dir())->permission(this, WRITE))
+            if ((dynamic_cast<filesystem_c*>(get_current_dir()))->permission(this, WRITE))
             {
-                file_c *newfile = new file_c(this, name, (filesystem_c *)this->get_current_dir());
+                file_c *newfile = new file_c(this, name, dynamic_cast<filesystem_c*>(this->get_current_dir()));
                 set_current_dir(dir);
                 return true;
             }
@@ -355,9 +355,9 @@ bool user_c::touch(vector<string> &args)
     }
     else
     {
-        if (((filesystem_c *)dir)->permission(this, WRITE))
+        if ((dynamic_cast<filesystem_c*>(dir))->permission(this, WRITE))
         {
-            file_c *newfile = new file_c(this, name, (filesystem_c *)this->get_current_dir());
+            file_c *newfile = new file_c(this, name, dynamic_cast<filesystem_c*>(this->get_current_dir()));
             return true;
         }
         else
@@ -382,7 +382,7 @@ bool user_c::cp(vector<string> &args)
         vsrc[0] = vsrc[0].substr(0, vsrc[0].rfind("/"));
         if (cd(vsrc))
         {
-            if (((filesystem_c *)get_current_dir())->permission(this, WRITE))
+            if ((dynamic_cast<filesystem_c*>(get_current_dir()))->permission(this, WRITE))
             {
                 // TODO 拷贝该文件
                 auto filesystem = get_current_dir()->get_contents()[src];
@@ -413,7 +413,7 @@ bool user_c::cp(vector<string> &args)
     }
     else
     {
-        if (((filesystem_c *)dir)->permission(this, WRITE))
+        if ((dynamic_cast<filesystem_c*>(dir))->permission(this, WRITE))
         {
             // TODO 拷贝该文件
             auto filesystem = get_current_dir()->get_contents()[src];
@@ -444,7 +444,7 @@ bool user_c::cp(vector<string> &args)
         vdest[0] = vdest[0].substr(0, vdest[0].rfind("/"));
         if (cd(vdest))
         {
-            if (((filesystem_c *)get_current_dir())->permission(this, WRITE))
+            if ((dynamic_cast<filesystem_c*>(get_current_dir()))->permission(this, WRITE))
             {
                 // TODO 将拷贝的文件放在该目录下
                 if (dest == "")
@@ -468,7 +468,7 @@ bool user_c::cp(vector<string> &args)
     }
     else
     {
-        if (((filesystem_c *)dir)->permission(this, WRITE))
+        if ((dynamic_cast<filesystem_c*>(dir))->permission(this, WRITE))
         {
             // TODO 将拷贝的文件放在该目录下
             if (dest == "")
@@ -489,14 +489,76 @@ bool user_c::cp(vector<string> &args)
 //（8）rm - 删除文件或目录
 bool user_c::rm(vector<string> &args)
 {
+    auto dir = get_current_dir();
+    string name = args[0];
+    cout  << name <<endl;
+    if (args[0].find("/") != string::npos)
+    {
+        name = args[0].substr(args[0].rfind("/") + 1);
+        args[0] = args[0].substr(0, args[0].rfind("/"));
+        if (cd(args))
+        {
+            if ((dynamic_cast<filesystem_c*>(get_current_dir()))->permission(this, WRITE))
+            {
+                filesystem_c* filesystem = get_current_dir()->get_contents()[name];
+                FILETYPE type = filesystem->get_filetype();
+                if( type == DIR){
+                    delete dynamic_cast<dir_c *>(filesystem);
+                }else if(type == BINARY || type == TEXT || type == UNKNOWN){
+                    get_current_dir()->get_contents().erase(name);
+                    delete dynamic_cast<file_c *>(filesystem);   
+                }
+                
+                set_current_dir(dir);
+                return true;
+            }
+            else
+            {
+                set_error(PERMISSION);
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        if ((dynamic_cast<filesystem_c*>(dir))->permission(this, WRITE))
+        {
+            filesystem_c* filesystem = get_current_dir()->get_contents()[name];
+            FILETYPE type = filesystem->get_filetype();
+            if( type == DIR){
+                delete dynamic_cast<dir_c *>(filesystem);
+            }else if(type == BINARY || type == TEXT || type == UNKNOWN){
+                dir->get_contents().erase(name);
+                delete dynamic_cast<file_c *>(filesystem);
+            }
+            return true;
+        }
+        else
+        {
+            set_error(PERMISSION);
+            return false;
+        }
+    }
 }
 //（9）mv - 移动文件与目录或重命名
 bool user_c::mv(vector<string> &args)
 {
+    vector<string> v(args.begin(),args.begin()+1);
+    if(cp(args) == false) return false;
+    if(rm(v) == false) return false;
+    return true;
 }
 //（10）cat - 查看文件内容
 bool user_c::cat(vector<string> &args)
 {
+    auto dir = get_current_dir();
+    cd(args);
+
+    set_current_dir(dir);
 }
 //（11）more - 文本过滤器
 bool user_c::more(vector<string> &args)
