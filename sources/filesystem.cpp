@@ -228,6 +228,8 @@ file_c::file_c(
         size = 0;
         ptr_mem = new vector<string>;
         mem = *ptr_mem;
+        mem.push_back("213123");
+        mem.push_back("assdasda");
         (dynamic_cast<dir_c*>(parent))->get_contents()[name] = this;
 }
 

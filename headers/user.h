@@ -76,6 +76,8 @@ public:
     bool ln(vector<string> &);
     //（18）history - 查看执行过的的历史命令
     bool history(vector<string> &);
+    // (19) vim - 写文件
+    bool vim(vector<string>&);
 };
 
 #endif

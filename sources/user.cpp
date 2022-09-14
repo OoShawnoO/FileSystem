@@ -1,6 +1,8 @@
 #include "user.h"
 #include "filesystem.h"
 
+#include <fstream>
+
 unsigned char user_c::ucount = 0;
 unsigned char user_c::gcount = 0;
 
@@ -41,6 +43,7 @@ user_c::user_c(string _name)
     functions["dup2"] = &user_c::dup2;
     functions["ln"] = &user_c::ln;
     functions["history"] = &user_c::history;
+    functions["vim"] = &user_c::vim;
 }
 
 user_c::~user_c()
@@ -507,4 +510,57 @@ bool user_c::ln(vector<string> &args)
 //（18）history - 查看执行过的的历史命令
 bool user_c::history(vector<string> &args)
 {
+}
+// (19) vim - 写文件
+bool user_c::vim(vector<string>& args){
+    
+    TEMP(args,
+    [](user_c* user,string name){
+        file_c* f = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+        vector<string> v = f->get_mem();
+        ofstream out(name);
+        for(auto x : v){
+            out << x;
+        }
+        out.close();
+        system((string("vim ")+name).c_str());
+        v.clear();
+        ifstream in(name);
+        while(!in.eof()){
+            string line;
+            getline(in,line);
+            line = line + "\n";
+            if(line!="\n"){
+                v.push_back(line);
+            }
+        }
+        in.close();
+        f->get_mem() = v;
+        system((string("rm ")+name).c_str());
+    },
+    [](user_c* user,string name){
+        file_c* f = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+        vector<string> v = f->get_mem();
+        ofstream out(name);
+        for(auto x : v){
+            out << x;
+            out << "\n";
+        }
+        out.close();
+        system((string("vim ")+name).c_str());
+        v.clear();
+        ifstream in(name);
+        while(!in.eof()){
+            string line;
+            getline(in,line);
+            line = line + "\n";
+            if(line!="\n"){
+                v.push_back(line);
+            }
+        }
+        in.close();
+        f->get_mem() = v;
+        system((string("rm ")+name).c_str());
+    }
+    );
 }
