@@ -13,6 +13,7 @@ private:
     unsigned char uid; /* 最多256个用户 */
     string name;
     dir_c *current_dir;
+    int read_cursor;
 
 public:
     map<string, bool (user_c::*)(vector<string> &)> functions;
@@ -28,6 +29,7 @@ public:
     unsigned char get_gid() const;
     ERROR get_error() const;
     dir_c *get_current_dir();
+    int get_read_cursor() const;
 
     void set_name(string);
     bool set_uid(unsigned char);
@@ -36,6 +38,7 @@ public:
     bool set_gid(unsigned char, user_c &user);
     void set_error(ERROR);
     void set_current_dir(dir_c *);
+    void set_read_cursor(int);
 
     //（1）pwd - 显示当前目录的绝对路径
     bool pwd(vector<string> &);

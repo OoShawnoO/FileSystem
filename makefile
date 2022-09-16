@@ -17,4 +17,7 @@ clean:
 	rm $(objs) -f
 	clear
 
-main:$(target) clean
+clear:
+	clear
+
+main:$(target) clear

@@ -55,6 +55,7 @@ unsigned char user_c::get_uid() const { return uid; }
 unsigned char user_c::get_gid() const { return gid; }
 ERROR user_c::get_error() const { return error; }
 dir_c *user_c::get_current_dir() { return current_dir; }
+int user_c::get_read_cursor() const{ return read_cursor;}
 
 void user_c::set_name(string _name) { name = _name; }
 bool user_c::set_uid(unsigned char _uid)
@@ -111,6 +112,7 @@ bool user_c::set_gid(unsigned char _gid, user_c &user)
 };
 void user_c::set_error(ERROR _error) { error = _error; }
 void user_c::set_current_dir(dir_c *dir) { current_dir = dir; }
+void user_c::set_read_cursor(int cursor) { read_cursor = cursor; }
 
 extern dir_c *root;
 extern user_c *user;
@@ -474,14 +476,54 @@ bool user_c::mv(vector<string> &args)
 //（10）cat - 查看文件内容
 bool user_c::cat(vector<string> &args)
 {
-    auto dir = get_current_dir();
-    cd(args);
-    
-    set_current_dir(dir);
+    return TEMP(args,
+    [](user_c* user,string name){
+        file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+        vector<string>& v = file->get_mem();
+        vector<string>::iterator it = v.begin();
+        for(;it != v.end() && it != v.begin() + 10;it ++){
+            cout << *it <<endl;
+        }
+        if(it == v.begin()+10) user->set_read_cursor(10);
+        else user->set_read_cursor(0);
+    },
+    [](user_c* user,string name){
+        file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+        vector<string>& v = file->get_mem();
+        vector<string>::iterator it = v.begin();
+        for(;it != v.end() && it != v.begin() + 10;it ++){
+            cout << *it;
+        }
+        if(it == v.begin()+10) user->set_read_cursor(10);
+        else user->set_read_cursor(0);
+        }
+    );
 }
 //（11）more - 文本过滤器
 bool user_c::more(vector<string> &args)
 {
+    return TEMP(args,
+    [](user_c* user,string name){
+        file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+        vector<string>& v = file->get_mem();
+        vector<string>::iterator it = v.begin() + user->get_read_cursor();
+        for(;it != v.end() && it != v.begin() + 10 + user->get_read_cursor();it ++){
+            cout << *it;
+        }
+        if(it == v.begin()+10+user->get_read_cursor()) user->set_read_cursor(10+user->get_read_cursor());
+        else user->set_read_cursor(0);
+    },
+    [](user_c* user,string name){
+        file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+        vector<string>& v = file->get_mem();
+        vector<string>::iterator it = v.begin() + user->get_read_cursor();
+        for(;it != v.end() && it != v.begin() + 10 + user->get_read_cursor();it ++){
+            cout << *it;
+        }
+        if(it == v.begin()+10+user->get_read_cursor()) user->set_read_cursor(10+user->get_read_cursor());
+        else user->set_read_cursor(0);
+        }
+    );
 }
 //（12）less - 分屏查看文件内容
 bool user_c::less(vector<string> &args)
