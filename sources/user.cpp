@@ -36,7 +36,6 @@ user_c::user_c(string _name)
     functions["mv"] = &user_c::mv;
     functions["cat"] = &user_c::cat;
     functions["more"] = &user_c::more;
-    functions["less"] = &user_c::less;
     functions["echo"] = &user_c::echo;
     functions["head"] = &user_c::head;
     functions["tail"] = &user_c::tail;
@@ -525,35 +524,70 @@ bool user_c::more(vector<string> &args)
         }
     );
 }
-//（12）less - 分屏查看文件内容
-bool user_c::less(vector<string> &args)
-{
-}
-//（13）echo - 输出内容到控制台
+//（12）echo - 输出内容到控制台
 bool user_c::echo(vector<string> &args)
 {
+    if(args.size() > 0){
+        cout << args[0] << endl;
+        return true;
+    }
+    return false;
 }
-//（14）head - 显示文件开头部分
+//（13）head - 显示文件开头部分
 bool user_c::head(vector<string> &args)
 {
+    return cat(args);
 }
-//（15）tail - 显示文件尾部的部分
+//（14）tail - 显示文件尾部的部分
 bool user_c::tail(vector<string> &args)
 {
+    return TEMP(args,
+    [](user_c* user,string name){
+        file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+        vector<string>& v = file->get_mem();
+        vector<string>::iterator it;
+        if(v.size() > 10){
+            it = v.end() - 10;
+        }else{
+            it = v.end() - v.size();   
+        }
+        
+        for(;it != v.end();it ++){
+            cout << *it <<endl;
+        }
+    },
+    [](user_c* user,string name){
+        file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+        vector<string>& v = file->get_mem();
+        vector<string>::iterator it;
+        if(v.size() > 10){
+            it = v.end() - 10;
+        }else{
+            it = v.end() - v.size();   
+        }
+        
+        for(;it != v.end();it ++){
+            cout << *it <<endl;
+        }
+    }
+    );
 }
-//（16）> / >> - 输出重定向/追加
+//（15）> / >> - 输出重定向/追加
 bool user_c::dup2(vector<string> &args)
 {
+
 }
-//（17）ln - 软链接
+//（16）ln - 软链接
 bool user_c::ln(vector<string> &args)
 {
+
 }
-//（18）history - 查看执行过的的历史命令
+//（17）history - 查看执行过的的历史命令
 bool user_c::history(vector<string> &args)
 {
+
 }
-// (19) vim - 写文件
+// (18) vim - 写文件
 bool user_c::vim(vector<string>& args){
     
     TEMP(args,
