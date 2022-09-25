@@ -280,9 +280,7 @@ dir_c::dir_c(const dir_c &dir) : filesystem_c(dir)
                 if(x.first == "." || x.first == "..") continue;
                 if(x.second->get_filetype() == DIR){
                         contents[x.first] =  dynamic_cast<filesystem_c*>(new dir_c(*dynamic_cast<dir_c*>(x.second)));
-                }else if(x.second->get_filetype() == BINARY
-                ||x.second->get_filetype() == TEXT
-                ||x.second->get_filetype() == UNKNOWN){
+                }else{
                         contents[x.first] =  dynamic_cast<filesystem_c*>(new file_c(*dynamic_cast<file_c*>(x.second)));
                 }
         }
@@ -291,4 +289,24 @@ dir_c::dir_c(const dir_c &dir) : filesystem_c(dir)
 map<string, filesystem_c *> &dir_c::get_contents()
 {
         return contents;
+}
+
+
+link_c::link_c(user_c *user, string name, filesystem_c *parent,
+        unsigned char owner_permission,
+        unsigned char group_permission,
+        unsigned char other_permission) : filesystem_c(name, parent, owner_permission, group_permission, other_permission, user, LINK)
+{
+        (dynamic_cast<dir_c*>(parent))->get_contents()[name] = this;
+}
+
+link_c::link_c(const link_c& link):filesystem_c(link){
+        real = link.real;
+}
+
+void link_c::set_real(filesystem_c* filesystem){
+        real = filesystem;       
+}
+filesystem_c* link_c::get_real(){
+        return real;
 }

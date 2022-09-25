@@ -21,6 +21,7 @@ enum FILETYPE
     BINARY = 0,
     TEXT,
     DIR,
+    LINK,
     UNKNOWN,
 };
 

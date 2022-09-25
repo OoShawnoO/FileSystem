@@ -130,4 +130,23 @@ public:
     map<string, filesystem_c *> &get_contents();
 };
 
+
+class link_c : public filesystem_c
+{
+private:
+    filesystem_c* real;
+public:
+    link_c(user_c *user, string name, filesystem_c *parent,
+        unsigned char owner_permission = 63,
+        unsigned char group_permission = 63,
+        unsigned char other_permission = 5);
+    
+    link_c(const link_c &link);
+    ~link_c(){
+        
+    }
+    void set_real(filesystem_c*);
+    filesystem_c* get_real();
+};
+
 #endif

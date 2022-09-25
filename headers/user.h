@@ -14,6 +14,7 @@ private:
     string name;
     dir_c *current_dir;
     int read_cursor;
+    vector<string> his;
 
 public:
     map<string, bool (user_c::*)(vector<string> &)> functions;
@@ -30,6 +31,7 @@ public:
     ERROR get_error() const;
     dir_c *get_current_dir();
     int get_read_cursor() const;
+    vector<string>& get_history();
 
     void set_name(string);
     bool set_uid(unsigned char);
@@ -49,7 +51,6 @@ public:
     // 以下函数重复代码过多 进行进一步封装
     bool TEMP(vector<string>&,function<void(user_c*,string)>,function<void(user_c*,string)>);
     //（4）mkdir - 创建目录
-
     bool mkdir(vector<string> &);
     //（5）rmdir - 删除目录(空目录)
     bool rmdir(vector<string> &);
@@ -65,21 +66,19 @@ public:
     bool cat(vector<string> &);
     //（11）more - 文本过滤器
     bool more(vector<string> &);
-    //（12）less - 分屏查看文件内容
-    bool less(vector<string> &);
-    //（13）echo - 输出内容到控制台
+    //（12）echo - 输出内容到控制台
     bool echo(vector<string> &);
-    //（14）head - 显示文件开头部分
+    //（13）head - 显示文件开头部分
     bool head(vector<string> &);
-    //（15）tail - 显示文件尾部的部分
+    //（14）tail - 显示文件尾部的部分
     bool tail(vector<string> &);
-    //（16）> / >> - 输出重定向/追加
+    //（15）> / >> - 输出重定向/追加
     bool dup2(vector<string> &);
-    //（17）ln - 软链接
+    //（16）ln - 软链接
     bool ln(vector<string> &);
-    //（18）history - 查看执行过的的历史命令
+    //（17）history - 查看执行过的的历史命令
     bool history(vector<string> &);
-    // (19) vim - 写文件
+    // (18) vim - 写文件
     bool vim(vector<string>&);
 };
 

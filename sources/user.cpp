@@ -23,7 +23,7 @@ user_c::user_c(string _name)
     gcount++;
     ucount++;
     error = NO;
-
+    
     functions = *new map<string, bool (user_c::*)(std::vector<std::string> &)>;
     functions["ls"] = &user_c::ls;
     functions["pwd"] = &user_c::pwd;
@@ -55,6 +55,7 @@ unsigned char user_c::get_gid() const { return gid; }
 ERROR user_c::get_error() const { return error; }
 dir_c *user_c::get_current_dir() { return current_dir; }
 int user_c::get_read_cursor() const{ return read_cursor;}
+vector<string>& user_c::get_history() {return his;}
 
 void user_c::set_name(string _name) { name = _name; }
 bool user_c::set_uid(unsigned char _uid)
@@ -155,6 +156,11 @@ bool user_c::ls(vector<string> &args)
             color_cout(HIGHTLIGHT, F_CYAN, x.first);
             break;
         }
+        case LINK:
+        {
+            color_cout(HIGHTLIGHT,F_RED,x.first);
+            break;
+        }
         case TEXT:
         {
             color_cout(HIGHTLIGHT, F_GREEN, x.first);
@@ -222,6 +228,10 @@ bool user_c::cd(vector<string> &args)
             if (pos->get_contents()[x]->get_filetype() == DIR)
             {
                 pos = dynamic_cast<dir_c*>(pos->get_contents()[x]);
+            }
+            else if(pos->get_contents()[x]->get_filetype() == LINK 
+            && dynamic_cast<link_c*>(pos->get_contents()[x])->get_real()->get_filetype() == DIR){
+                pos = dynamic_cast<dir_c*>(dynamic_cast<link_c*>(pos->get_contents()[x])->get_real());
             }
             else
             {
@@ -343,7 +353,10 @@ bool user_c::cp(vector<string> &args)
                 {
                     copy = new dir_c(*dynamic_cast<dir_c *>(filesystem));
                 }
-                else if (filesystem->get_filetype() == BINARY || filesystem->get_filetype() == TEXT || filesystem->get_filetype() == UNKNOWN)
+                else if (filesystem->get_filetype() == BINARY 
+                || filesystem->get_filetype() == TEXT 
+                || filesystem->get_filetype() == UNKNOWN
+                || filesystem->get_filetype() == LINK)
                 {
                     copy = new file_c(*dynamic_cast<file_c *>(filesystem));
                 }
@@ -375,7 +388,10 @@ bool user_c::cp(vector<string> &args)
             {
                 copy = new dir_c(*dynamic_cast<dir_c *>(filesystem));
             }
-            else if (filesystem->get_filetype() == BINARY || filesystem->get_filetype() == TEXT || filesystem->get_filetype() == UNKNOWN)
+            else if (filesystem->get_filetype() == BINARY 
+            || filesystem->get_filetype() == TEXT 
+            || filesystem->get_filetype() == UNKNOWN
+            || filesystem->get_filetype() == LINK)
             {
                 copy = new file_c(*dynamic_cast<file_c *>(filesystem));
             }
@@ -447,7 +463,7 @@ bool user_c::rm(vector<string> &args)
         FILETYPE type = filesystem->get_filetype();
         if( type == DIR){
             delete dynamic_cast<dir_c *>(filesystem);
-        }else if(type == BINARY || type == TEXT || type == UNKNOWN){
+        }else if(type == BINARY || type == TEXT || type == UNKNOWN || type == LINK){
             user->get_current_dir()->get_contents().erase(name);
             delete dynamic_cast<file_c *>(filesystem);   
         }
@@ -457,7 +473,7 @@ bool user_c::rm(vector<string> &args)
         FILETYPE type = filesystem->get_filetype();
         if( type == DIR){
             delete dynamic_cast<dir_c *>(filesystem);
-        }else if(type == BINARY || type == TEXT || type == UNKNOWN){
+        }else if(type == BINARY || type == TEXT || type == UNKNOWN || type == LINK){
             user->get_current_dir()->get_contents().erase(name);
             delete dynamic_cast<file_c *>(filesystem);
         }
@@ -575,44 +591,136 @@ bool user_c::tail(vector<string> &args)
 //（15）> / >> - 输出重定向/追加
 bool user_c::dup2(vector<string> &args)
 {
-
+    
 }
 //（16）ln - 软链接
 bool user_c::ln(vector<string> &args)
 {
+    auto dir = get_current_dir();
+    filesystem_c *copy = nullptr;
+    string src = args[0];
+    string dest = args[1];
+    vector<string> vsrc(args.begin(), args.begin() + 1);
+    vector<string> vdest(args.begin() + 1, args.begin() + 2);
+    if (vsrc[0].find("/") != string::npos)
+    {
+        src = vsrc[0].substr(vsrc[0].rfind("/") + 1);
+        vsrc[0] = vsrc[0].substr(0, vsrc[0].rfind("/"));
+        if (cd(vsrc))
+        {
+            if ((dynamic_cast<filesystem_c*>(get_current_dir()))->permission(this, WRITE))
+            {
+                copy = get_current_dir()->get_contents()[src];
+                if(copy == NULL){set_error(NOTFOUND);return false;}
+                set_current_dir(dir);
+            }
+            else
+            {
+                set_error(PERMISSION);
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        if ((dynamic_cast<filesystem_c*>(dir))->permission(this, WRITE))
+        {
+            copy = get_current_dir()->get_contents()[src];
+            if(copy == NULL){set_error(NOTFOUND);return false;}
+        }
+        else
+        {
+            set_error(PERMISSION);
+            return false;
+        }
+    }
 
+    if (vdest[0].find("/") != string::npos)
+    {
+        dest = vdest[0].substr(vdest[0].rfind("/") + 1);
+        vdest[0] = vdest[0].substr(0, vdest[0].rfind("/"));
+        if (cd(vdest))
+        {
+            if ((dynamic_cast<filesystem_c*>(get_current_dir()))->permission(this, WRITE))
+            {
+                link_c* link = new link_c(this,dest,dynamic_cast<filesystem_c*>(get_current_dir()));
+                link->set_real(copy);
+                set_current_dir(dir);
+            }
+            else
+            {
+                set_error(PERMISSION);
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        if ((dynamic_cast<filesystem_c*>(dir))->permission(this, WRITE))
+        {
+            // TODO 将LINK放在该目录下
+            link_c* link = new link_c(this,dest,dynamic_cast<filesystem_c*>(get_current_dir()));
+            link->set_real(copy);
+        }
+        else
+        {
+            set_error(PERMISSION);
+            return false;
+        }
+    }
 }
 //（17）history - 查看执行过的的历史命令
 bool user_c::history(vector<string> &args)
 {
-
+    int count = 1;
+    for(auto it : his){
+        cout << count++ << "\t" << it << endl;
+    }
 }
 // (18) vim - 写文件
 bool user_c::vim(vector<string>& args){
     
     TEMP(args,
     [](user_c* user,string name){
-        file_c* f = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
-        vector<string> v = f->get_mem();
-        ofstream out(name);
-        for(auto x : v){
-            out << x;
+        filesystem_c* f = user->get_current_dir()->get_contents()[name];
+        if(user->get_current_dir()->get_contents()[name]->get_filetype() == LINK 
+        && dynamic_cast<link_c*>(user->get_current_dir()->get_contents()[name])->get_real()->get_filetype() == TEXT
+        ){
+            f = dynamic_cast<file_c*>(dynamic_cast<link_c*>(user->get_current_dir()->get_contents()[name])->get_real());
         }
-        out.close();
-        system((string("vim ")+name).c_str());
-        v.clear();
-        ifstream in(name);
-        while(!in.eof()){
-            string line;
-            getline(in,line);
-            line = line + "\n";
-            if(line!="\n"){
-                v.push_back(line);
+
+        if( f->get_filetype() == TEXT){
+            file_c* f = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+            vector<string> v = f->get_mem();
+            ofstream out(name);
+            for(auto x : v){
+                out << x;
             }
+            out.close();
+            system((string("vim ")+name).c_str());
+            v.clear();
+            ifstream in(name);
+            while(!in.eof()){
+                string line;
+                getline(in,line);
+                line = line + "\n";
+                if(line!="\n"){
+                    v.push_back(line);
+                }
+            }
+            in.close();
+            f->get_mem() = v;
+            system((string("rm ")+name).c_str());
         }
-        in.close();
-        f->get_mem() = v;
-        system((string("rm ")+name).c_str());
+        
     },
     [](user_c* user,string name){
         file_c* f = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);

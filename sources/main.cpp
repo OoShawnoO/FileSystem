@@ -22,11 +22,14 @@ int main()
 
     bool right = true;
 
+    vector<string>& vec = user->get_history();
+
     while (1)
     {
-
+        
         color_cout(HIGHTLIGHT, F_CYAN, user->get_name() + ":");
         getline(cin, cmd);
+        vec.push_back(cmd);
         split(cmd, ' ', params);
         cmd.clear();
 
