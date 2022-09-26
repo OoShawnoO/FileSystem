@@ -49,7 +49,9 @@ public:
     //（3）cd - 切换至指定目录
     bool cd(vector<string> &);
     // 以下函数重复代码过多 进行进一步封装
-    bool TEMP(vector<string>&,function<void(user_c*,string)>,function<void(user_c*,string)>,ATTRIBUTE attr = READ);
+    bool TEMP(vector<string>&,function<void(user_c*,string)>,ATTRIBUTE attr = READ);
+    
+    bool TEMP(vector<string>&,function<filesystem_c*(user_c*,string,filesystem_c*)>,function<void(user_c*,string,string,filesystem_c*)>,ATTRIBUTE attr = READ);
     //（4）mkdir - 创建目录
     bool mkdir(vector<string> &);
     //（5）rmdir - 删除目录(空目录)
