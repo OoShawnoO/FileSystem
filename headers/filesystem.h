@@ -41,6 +41,7 @@ public:
     tm *update_time;          // 修改时间
     tm *visit_time;           // 访问时间
     filesystem_c *parent;     // 上级目录
+    int lcount;               // 链接数
 
     virtual inline FILETYPE get_filetype() const;
     virtual inline attribute_u get_owner_permission() const;
@@ -54,7 +55,11 @@ public:
     virtual inline tm get_update_time() const;
     virtual inline tm get_visit_time() const;
     virtual inline filesystem_c *get_parent();
+    virtual inline int get_lcount();
 
+    virtual void set_create_time(tm *);
+    virtual void set_update_time(tm *);
+    virtual void set_visit_time(tm *);
     virtual void set_filetype(FILETYPE);
     virtual void set_filetype();
     virtual void set_owner_permission(attribute_u);
@@ -67,11 +72,8 @@ public:
     virtual void set_createid(unsigned char);
     virtual void set_ownerid(unsigned char);
     virtual void set_ownergid(unsigned char);
-    virtual void set_create_time(tm *);
-    virtual void set_update_time(tm *);
-    virtual void set_visit_time(tm *);
     virtual void set_parent(filesystem_c *,bool = true);
-
+    virtual void set_lcount(int);
     virtual bool permission(user_c *, ATTRIBUTE) const;
 };
 

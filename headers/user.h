@@ -49,7 +49,7 @@ public:
     //（3）cd - 切换至指定目录
     bool cd(vector<string> &);
     // 以下函数重复代码过多 进行进一步封装
-    bool TEMP(vector<string>&,function<void(user_c*,string)>,function<void(user_c*,string)>);
+    bool TEMP(vector<string>&,function<void(user_c*,string)>,function<void(user_c*,string)>,ATTRIBUTE attr = READ);
     //（4）mkdir - 创建目录
     bool mkdir(vector<string> &);
     //（5）rmdir - 删除目录(空目录)
@@ -80,6 +80,8 @@ public:
     bool history(vector<string> &);
     // (18) vim - 写文件
     bool vim(vector<string>&);
+    // (19) stat - 文件属性
+    bool stat(vector<string>&);
 };
 
 #endif

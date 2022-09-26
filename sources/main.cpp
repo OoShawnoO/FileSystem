@@ -46,6 +46,7 @@ int main()
         {
             user->set_error(CMD);
         }
+        
         uerror(user->get_error());
         user->set_error(NO);
         params.clear();

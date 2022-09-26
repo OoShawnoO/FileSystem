@@ -1,15 +1,6 @@
 #include "filesystem.h"
 
-/*
-    time_t timer;
-    timer = time(NULL);
-    create_time = localtime(&timer);
-    *update_time = *create_time;
-    *visit_time = *create_time;
-*/
-
-tm *get_time()
-{
+static tm *get_time(){
         time_t timer;
         timer = time(NULL);
         tm *t = localtime(&timer);
@@ -25,6 +16,7 @@ filesystem_c::filesystem_c(
     const user_c *user,
     FILETYPE _type)
 {
+        lcount = 1;
         name = _name;
         if (_type != UNKNOWN)
                 set_filetype(_type);
@@ -78,6 +70,7 @@ inline tm filesystem_c::get_create_time() const { return *create_time; }
 inline tm filesystem_c::get_update_time() const { return *update_time; }
 inline tm filesystem_c::get_visit_time() const { return *visit_time; }
 inline filesystem_c *filesystem_c::get_parent() { return parent; }
+inline int filesystem_c::get_lcount() { return lcount;}
 
 void filesystem_c::set_filetype(FILETYPE newtype) { type = newtype; }
 void filesystem_c::set_filetype()
@@ -118,6 +111,7 @@ void filesystem_c::set_parent(filesystem_c *_parent,bool flag)
         if (parent != NULL && flag == true)
         {
                 (dynamic_cast<dir_c*>(parent))->get_contents().erase(this->get_name());
+                parent->set_update_time(get_time());
                 parent = _parent;
                 (dynamic_cast<dir_c*>(parent))->get_contents()[get_name()] = this;
         }
@@ -130,19 +124,8 @@ void filesystem_c::set_parent(filesystem_c *_parent,bool flag)
                 parent = _parent;
         }
 }
+void filesystem_c::set_lcount(int count){lcount = count;}
 
-/*
-        if(user.get_uid() == ownerid){
-                if(owner_attr_u.attr_s.read) return true;
-                else return false;
-        }else if(user.get_gid() == ownergid){
-                if(group_attr_u.attr_s.read) return true;
-                else return false;
-        }else{
-                if(other_attr_u.attr_s.read) return true;
-                else return false;
-        }
-*/
 bool filesystem_c::permission(user_c *user, ATTRIBUTE attr) const
 {
         unsigned char u = 0, g = 0, o = 0;
@@ -245,8 +228,10 @@ long file_c::get_size() const
 {
         return size;
 }
+
 vector<string> &file_c::get_mem()
 {
+        set_visit_time(get_time());
         return mem;
 }
 
@@ -288,6 +273,7 @@ dir_c::dir_c(const dir_c &dir) : filesystem_c(dir)
 
 map<string, filesystem_c *> &dir_c::get_contents()
 {
+        set_visit_time(get_time());
         return contents;
 }
 
@@ -305,8 +291,12 @@ link_c::link_c(const link_c& link):filesystem_c(link){
 }
 
 void link_c::set_real(filesystem_c* filesystem){
-        real = filesystem;       
+        set_update_time(get_time());
+        real = filesystem;
+        filesystem->set_lcount(filesystem->get_lcount()+1);
 }
+
 filesystem_c* link_c::get_real(){
+        set_visit_time(get_time());
         return real;
 }

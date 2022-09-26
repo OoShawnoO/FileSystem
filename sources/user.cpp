@@ -3,6 +3,28 @@
 
 #include <fstream>
 
+static tm *get_time(){
+        time_t timer;
+        timer = time(NULL);
+        tm *t = localtime(&timer);
+        return t;
+}
+
+void process_attr(attribute_u attr){
+    if(attr.attr_s.read == 1) { cout << "r ";}
+    else { cout << "- " ;}
+    if(attr.attr_s.write == 1) { cout << "w ";}
+    else { cout << "- ";}
+    if(attr.attr_s.exec == 1) { cout << "x ";}
+    else { cout << "- ";}
+    if(attr.attr_s.chread == 1) { cout << "cr ";}
+    else { cout << "- ";}
+    if(attr.attr_s.chwrite == 1) { cout << "cw ";}
+    else { cout << "- ";}
+    if(attr.attr_s.chexec == 1) { cout << "cx " ;}
+    else { cout << "- ";}
+}
+
 unsigned char user_c::ucount = 0;
 unsigned char user_c::gcount = 0;
 
@@ -43,6 +65,7 @@ user_c::user_c(string _name)
     functions["ln"] = &user_c::ln;
     functions["history"] = &user_c::history;
     functions["vim"] = &user_c::vim;
+    functions["stat"] = &user_c::stat;
 }
 
 user_c::~user_c()
@@ -254,7 +277,8 @@ bool user_c::cd(vector<string> &args)
     }
 }
 // 以下函数重复代码过多 进行进一步封装为接口
-bool user_c::TEMP(vector<string>& args,function<void(user_c*,string)> cdarg,function<void(user_c*,string)> noarg){
+bool user_c::TEMP(vector<string>& args,function<void(user_c*,string)> cdarg,
+function<void(user_c*,string)> noarg,ATTRIBUTE attr){
     auto dir = get_current_dir();
     string name = args[0];
     if (args[0].find("/") != string::npos)
@@ -264,7 +288,7 @@ bool user_c::TEMP(vector<string>& args,function<void(user_c*,string)> cdarg,func
 
         if (cd(args))
         {
-            if ((dynamic_cast<filesystem_c*>(get_current_dir()))->permission(this, WRITE))
+            if ((dynamic_cast<filesystem_c*>(get_current_dir()))->permission(this, attr))
             {
                 cdarg(this,name);
                 set_current_dir(dir);
@@ -283,7 +307,7 @@ bool user_c::TEMP(vector<string>& args,function<void(user_c*,string)> cdarg,func
     }
     else
     {
-        if ((dynamic_cast<filesystem_c*>(dir))->permission(this, WRITE))
+        if ((dynamic_cast<filesystem_c*>(dir))->permission(this, attr))
         {
             noarg(this,name);
             return true;
@@ -327,7 +351,8 @@ bool user_c::touch(vector<string> &args)
     },
     [](user_c* user,string name){
         file_c *newfile = new file_c(user, name, dynamic_cast<filesystem_c*>(user->get_current_dir()));
-    }
+    },
+    WRITE
     );
 }
 //（7）cp - 拷贝文件或目录到指定文件或目录 cp source[args[0]] -> dest[args[1]]
@@ -345,7 +370,7 @@ bool user_c::cp(vector<string> &args)
         vsrc[0] = vsrc[0].substr(0, vsrc[0].rfind("/"));
         if (cd(vsrc))
         {
-            if ((dynamic_cast<filesystem_c*>(get_current_dir()))->permission(this, WRITE))
+            if ((dynamic_cast<filesystem_c*>(get_current_dir()))->permission(this, READ))
             {
                 // TODO 拷贝该文件
                 auto filesystem = get_current_dir()->get_contents()[src];
@@ -356,9 +381,12 @@ bool user_c::cp(vector<string> &args)
                 else if (filesystem->get_filetype() == BINARY 
                 || filesystem->get_filetype() == TEXT 
                 || filesystem->get_filetype() == UNKNOWN
-                || filesystem->get_filetype() == LINK)
+                )
                 {
                     copy = new file_c(*dynamic_cast<file_c *>(filesystem));
+                }
+                else if(filesystem->get_filetype() == LINK){
+                    copy = new link_c(*dynamic_cast<link_c*>(filesystem));
                 }
                 else
                 {
@@ -379,7 +407,7 @@ bool user_c::cp(vector<string> &args)
     }
     else
     {
-        if ((dynamic_cast<filesystem_c*>(dir))->permission(this, WRITE))
+        if ((dynamic_cast<filesystem_c*>(dir))->permission(this, READ))
         {
             // TODO 拷贝该文件
             auto filesystem = get_current_dir()->get_contents()[src];
@@ -391,9 +419,12 @@ bool user_c::cp(vector<string> &args)
             else if (filesystem->get_filetype() == BINARY 
             || filesystem->get_filetype() == TEXT 
             || filesystem->get_filetype() == UNKNOWN
-            || filesystem->get_filetype() == LINK)
+            )
             {
                 copy = new file_c(*dynamic_cast<file_c *>(filesystem));
+            }
+            else if(filesystem->get_filetype() == LINK){
+                copy = new link_c(*dynamic_cast<link_c*>(filesystem));
             }
             else
             {
@@ -460,24 +491,37 @@ bool user_c::rm(vector<string> &args)
     return TEMP(args,
     [](user_c* user,string name){
         filesystem_c* filesystem = user->get_current_dir()->get_contents()[name];
+        
         FILETYPE type = filesystem->get_filetype();
         if( type == DIR){
             delete dynamic_cast<dir_c *>(filesystem);
-        }else if(type == BINARY || type == TEXT || type == UNKNOWN || type == LINK){
+        }else if(type == BINARY || type == TEXT || type == UNKNOWN){
             user->get_current_dir()->get_contents().erase(name);
+            user->get_current_dir()->set_update_time(get_time());
             delete dynamic_cast<file_c *>(filesystem);   
+        }else if(type == LINK){
+            user->get_current_dir()->get_contents().erase(name);
+            user->get_current_dir()->set_update_time(get_time());
+            delete dynamic_cast<link_c*>(filesystem);
         }
     },
     [](user_c* user,string name){
         filesystem_c* filesystem = user->get_current_dir()->get_contents()[name];
+        
         FILETYPE type = filesystem->get_filetype();
         if( type == DIR){
             delete dynamic_cast<dir_c *>(filesystem);
-        }else if(type == BINARY || type == TEXT || type == UNKNOWN || type == LINK){
+        }else if(type == BINARY || type == TEXT || type == UNKNOWN){
             user->get_current_dir()->get_contents().erase(name);
+            user->get_current_dir()->set_update_time(get_time());
             delete dynamic_cast<file_c *>(filesystem);
+        }else if(type == LINK){
+            user->get_current_dir()->get_contents().erase(name);
+            user->get_current_dir()->set_update_time(get_time());
+            delete dynamic_cast<link_c*>(filesystem);
         }
-    }
+    },
+    WRITE
     );
 }
 //（9）mv - 移动文件与目录或重命名
@@ -493,25 +537,35 @@ bool user_c::cat(vector<string> &args)
 {
     return TEMP(args,
     [](user_c* user,string name){
-        file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
-        vector<string>& v = file->get_mem();
-        vector<string>::iterator it = v.begin();
-        for(;it != v.end() && it != v.begin() + 10;it ++){
-            cout << *it <<endl;
+        filesystem_c* f = user->get_current_dir()->get_contents()[name];
+        if(f == NULL){user->set_error(NOTFOUND); return false;}
+        else if(f->get_filetype() != TEXT) {user->set_error(NOTTEXT); return false;}
+        else{
+            file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+            vector<string>& v = file->get_mem();
+            vector<string>::iterator it = v.begin();
+            for(;it != v.end() && it != v.begin() + 10;it ++){
+                cout << *it <<endl;
+            }
+            if(it == v.begin()+10) user->set_read_cursor(10);
+            else user->set_read_cursor(0);
         }
-        if(it == v.begin()+10) user->set_read_cursor(10);
-        else user->set_read_cursor(0);
     },
     [](user_c* user,string name){
-        file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
-        vector<string>& v = file->get_mem();
-        vector<string>::iterator it = v.begin();
-        for(;it != v.end() && it != v.begin() + 10;it ++){
-            cout << *it;
+        filesystem_c* f = user->get_current_dir()->get_contents()[name];
+        if(f == NULL){user->set_error(NOTFOUND); return false;}
+        else if(f->get_filetype() != TEXT) {user->set_error(NOTTEXT); return false;}
+        else{
+            file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+            vector<string>& v = file->get_mem();
+            vector<string>::iterator it = v.begin();
+            for(;it != v.end() && it != v.begin() + 10;it ++){
+                cout << *it <<endl;
+            }
+            if(it == v.begin()+10) user->set_read_cursor(10);
+            else user->set_read_cursor(0);
         }
-        if(it == v.begin()+10) user->set_read_cursor(10);
-        else user->set_read_cursor(0);
-        }
+    }
     );
 }
 //（11）more - 文本过滤器
@@ -519,25 +573,35 @@ bool user_c::more(vector<string> &args)
 {
     return TEMP(args,
     [](user_c* user,string name){
-        file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
-        vector<string>& v = file->get_mem();
-        vector<string>::iterator it = v.begin() + user->get_read_cursor();
-        for(;it != v.end() && it != v.begin() + 10 + user->get_read_cursor();it ++){
-            cout << *it;
+        filesystem_c* f = user->get_current_dir()->get_contents()[name];
+        if(f == NULL){user->set_error(NOTFOUND); return false;}
+        else if(f->get_filetype() != TEXT) {user->set_error(NOTTEXT); return false;}
+        else{
+            file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+            vector<string>& v = file->get_mem();
+            vector<string>::iterator it = v.begin() + user->get_read_cursor();
+            for(;it != v.end() && it != v.begin() + 10 + user->get_read_cursor();it ++){
+                cout << *it;
+            }
+            if(it == v.begin()+10+user->get_read_cursor()) user->set_read_cursor(10+user->get_read_cursor());
+            else user->set_read_cursor(0);
         }
-        if(it == v.begin()+10+user->get_read_cursor()) user->set_read_cursor(10+user->get_read_cursor());
-        else user->set_read_cursor(0);
     },
     [](user_c* user,string name){
-        file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
-        vector<string>& v = file->get_mem();
-        vector<string>::iterator it = v.begin() + user->get_read_cursor();
-        for(;it != v.end() && it != v.begin() + 10 + user->get_read_cursor();it ++){
-            cout << *it;
+        filesystem_c* f = user->get_current_dir()->get_contents()[name];
+        if(f == NULL){user->set_error(NOTFOUND); return false;}
+        else if(f->get_filetype() != TEXT) {user->set_error(NOTTEXT); return false;}
+        else{
+            file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+            vector<string>& v = file->get_mem();
+            vector<string>::iterator it = v.begin() + user->get_read_cursor();
+            for(;it != v.end() && it != v.begin() + 10 + user->get_read_cursor();it ++){
+                cout << *it;
+            }
+            if(it == v.begin()+10+user->get_read_cursor()) user->set_read_cursor(10+user->get_read_cursor());
+            else user->set_read_cursor(0);
         }
-        if(it == v.begin()+10+user->get_read_cursor()) user->set_read_cursor(10+user->get_read_cursor());
-        else user->set_read_cursor(0);
-        }
+    }
     );
 }
 //（12）echo - 输出内容到控制台
@@ -559,31 +623,41 @@ bool user_c::tail(vector<string> &args)
 {
     return TEMP(args,
     [](user_c* user,string name){
-        file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
-        vector<string>& v = file->get_mem();
-        vector<string>::iterator it;
-        if(v.size() > 10){
-            it = v.end() - 10;
-        }else{
-            it = v.end() - v.size();   
-        }
-        
-        for(;it != v.end();it ++){
-            cout << *it <<endl;
+        filesystem_c* f = user->get_current_dir()->get_contents()[name];
+        if(f == NULL){user->set_error(NOTFOUND); return false;}
+        else if(f->get_filetype() != TEXT) {user->set_error(NOTTEXT); return false;}
+        else{
+            file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+            vector<string>& v = file->get_mem();
+            vector<string>::iterator it;
+            if(v.size() > 10){
+                it = v.end() - 10;
+            }else{
+                it = v.end() - v.size();   
+            }
+            
+            for(;it != v.end();it ++){
+                cout << *it <<endl;
+            }
         }
     },
     [](user_c* user,string name){
-        file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
-        vector<string>& v = file->get_mem();
-        vector<string>::iterator it;
-        if(v.size() > 10){
-            it = v.end() - 10;
-        }else{
-            it = v.end() - v.size();   
-        }
-        
-        for(;it != v.end();it ++){
-            cout << *it <<endl;
+        filesystem_c* f = user->get_current_dir()->get_contents()[name];
+        if(f == NULL){user->set_error(NOTFOUND); return false;}
+        else if(f->get_filetype() != TEXT) {user->set_error(NOTTEXT); return false;}
+        else{
+            file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+            vector<string>& v = file->get_mem();
+            vector<string>::iterator it;
+            if(v.size() > 10){
+                it = v.end() - 10;
+            }else{
+                it = v.end() - v.size();   
+            }
+            
+            for(;it != v.end();it ++){
+                cout << *it <<endl;
+            }
         }
     }
     );
@@ -687,7 +761,6 @@ bool user_c::history(vector<string> &args)
 }
 // (18) vim - 写文件
 bool user_c::vim(vector<string>& args){
-    
     TEMP(args,
     [](user_c* user,string name){
         filesystem_c* f = user->get_current_dir()->get_contents()[name];
@@ -699,6 +772,7 @@ bool user_c::vim(vector<string>& args){
 
         if( f->get_filetype() == TEXT){
             file_c* f = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+            f->set_update_time(get_time());
             vector<string> v = f->get_mem();
             ofstream out(name);
             for(auto x : v){
@@ -724,6 +798,7 @@ bool user_c::vim(vector<string>& args){
     },
     [](user_c* user,string name){
         file_c* f = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+        f->set_update_time(get_time());
         vector<string> v = f->get_mem();
         ofstream out(name);
         for(auto x : v){
@@ -746,5 +821,181 @@ bool user_c::vim(vector<string>& args){
         f->get_mem() = v;
         system((string("rm ")+name).c_str());
     }
+    );
+}
+// (19) stat - 文件属性
+bool user_c::stat(vector<string>& args){
+    return TEMP(
+        args,
+        [](user_c* user,string name){
+            filesystem_c* filesystem = user->get_current_dir()->get_contents()[name];
+            if(filesystem == NULL){user->set_error(NOTFOUND);return false;}
+            cout << "FILE : " << filesystem->get_name() << "\t" << endl;
+            if(filesystem->get_filetype() == DIR){
+                cout << "Size : " << sizeof(dir_c) + sizeof(filesystem_c) << "\t" ;
+            }else if(filesystem->get_filetype() == LINK){
+                cout << "Size : " << sizeof(link_c) + sizeof(filesystem_c) << "\t" ;
+            }else{
+                cout << "Size : " << sizeof(file_c) + sizeof(filesystem_c) 
+                                    + sizeof(dynamic_cast<file_c*>(filesystem)->get_mem()) << "\t" ;
+            }
+            cout << "Type : ";
+            switch(filesystem->get_filetype()){
+                case DIR : {
+                    cout << "Dir";
+                    break;
+                }
+                case BINARY : {
+                    cout << "Binary";
+                    break;
+                }
+                case TEXT : {
+                    cout << "Text";
+                    break;
+                }
+                case LINK : {
+                    cout << "Link";
+                    break;
+                }
+                case UNKNOWN : {
+                    cout << "Unknown";
+                    break;
+                }
+                default : {
+                    break;
+                }
+            }
+            cout << "\t" << endl;
+            cout << "Link : " << filesystem->get_lcount() << endl;
+            cout << "Creater_uid : " << filesystem->get_createid() << "\t";
+            cout << "Owner_uid : " << filesystem->get_ownerid() << "\t";
+            cout << "Owenr_gid : " << filesystem->get_ownergid() << "\t" <<endl;
+            tm t = filesystem->get_create_time();
+            cout << "Create Time : " << t.tm_year + 1900 << "-" << t.tm_mon + 1 << "-" << t.tm_mday << " " ;
+            if(t.tm_hour > 10) { cout << t.tm_hour << ":";}
+            else{cout << "0" << t.tm_hour << ":";}
+            if(t.tm_min > 10) { cout << t.tm_min << ":";}
+            else{cout << "0" << t.tm_min << ":";}
+            if(t.tm_sec > 10) { cout << t.tm_sec <<endl;}
+            else{cout << "0" << t.tm_sec << endl;}
+            t = filesystem->get_update_time();
+            cout << "Update Time : " << t.tm_year + 1900 << "-" << t.tm_mon + 1 << "-" << t.tm_mday << " " ;
+            if(t.tm_hour > 10) { cout << t.tm_hour << ":";}
+            else{cout << "0" << t.tm_hour << ":";}
+            if(t.tm_min > 10) { cout << t.tm_min << ":";}
+            else{cout << "0" << t.tm_min << ":";}
+            if(t.tm_sec > 10) { cout << t.tm_sec <<endl;}
+            else{cout << "0" << t.tm_sec << endl;}
+            
+            t = filesystem->get_visit_time();
+            cout << "Visit Time : " << t.tm_year + 1900 << "-" << t.tm_mon + 1 << "-" << t.tm_mday << " " ;
+            if(t.tm_hour > 10) { cout << t.tm_hour << ":";}
+            else{cout << "0" << t.tm_hour << ":";}
+            if(t.tm_min > 10) { cout << t.tm_min << ":";}
+            else{cout << "0" << t.tm_min << ":";}
+            if(t.tm_sec > 10) { cout << t.tm_sec <<endl;}
+            else{cout << "0" << t.tm_sec << endl;}
+            
+            attribute_u attr = filesystem->get_owner_permission();
+            cout << "Owner Permission : ";
+            process_attr(attr);
+            cout << endl;
+            attr = filesystem->get_group_permission();
+            cout << "Owner Group Permission : ";
+            process_attr(attr);
+            cout << endl;
+            attr = filesystem->get_other_permission();
+            cout << "Other Permission : ";
+            process_attr(attr);
+            cout << endl;
+        },
+        [](user_c* user,string name){
+            filesystem_c* filesystem = user->get_current_dir()->get_contents()[name];
+            if(filesystem == NULL){user->set_error(NOTFOUND);return false;}
+            cout << "FILE : " << filesystem->get_name() << "\t" << endl;
+            if(filesystem->get_filetype() == DIR){
+                cout << "Size : " << sizeof(dir_c) + sizeof(filesystem_c) << "\t" ;
+            }else if(filesystem->get_filetype() == LINK){
+                cout << "Size : " << sizeof(link_c) + sizeof(filesystem_c) << "\t" ;
+            }else{
+                int size = 0;
+                vector<string> mem = dynamic_cast<file_c*>(filesystem)->get_mem();
+                for(auto i : mem){
+                    size += i.capacity();
+                }
+                cout << "Size : " << sizeof(file_c) + sizeof(filesystem_c) + size << "\t";
+            }
+            cout << "Type : ";
+            switch(filesystem->get_filetype()){
+                case DIR : {
+                    cout << "Dir";
+                    break;
+                }
+                case BINARY : {
+                    cout << "Binary";
+                    break;
+                }
+                case TEXT : {
+                    cout << "Text";
+                    break;
+                }
+                case LINK : {
+                    cout << "Link";
+                    break;
+                }
+                case UNKNOWN : {
+                    cout << "Unknown";
+                    break;
+                }
+                default : {
+                    break;
+                }
+            }
+            cout << "\t" << endl;
+            cout << "Link : " << filesystem->get_lcount() << endl;
+            cout << "Creater_uid : " << filesystem->get_createid() << "\t";
+            cout << "Owner_uid : " << filesystem->get_ownerid() << "\t";
+            cout << "Owenr_gid : " << filesystem->get_ownergid() << "\t" <<endl;
+            tm t = filesystem->get_create_time();
+            cout << "Create Time : " << t.tm_year + 1900 << "-" << t.tm_mon + 1 << "-" << t.tm_mday << " " ;
+            if(t.tm_hour > 10) { cout << t.tm_hour << ":";}
+            else{cout << "0" << t.tm_hour << ":";}
+            if(t.tm_min > 10) { cout << t.tm_min << ":";}
+            else{cout << "0" << t.tm_min << ":";}
+            if(t.tm_sec > 10) { cout << t.tm_sec <<endl;}
+            else{cout << "0" << t.tm_sec << endl;}
+            
+            t = filesystem->get_update_time();
+            cout << "Update Time : " << t.tm_year + 1900 << "-" << t.tm_mon + 1 << "-" << t.tm_mday << " " ;
+            if(t.tm_hour > 10) { cout << t.tm_hour << ":";}
+            else{cout << "0" << t.tm_hour << ":";}
+            if(t.tm_min > 10) { cout << t.tm_min << ":";}
+            else{cout << "0" << t.tm_min << ":";}
+            if(t.tm_sec > 10) { cout << t.tm_sec <<endl;}
+            else{cout << "0" << t.tm_sec << endl;}
+            
+            t = filesystem->get_visit_time();
+            cout << "Visit Time : " << t.tm_year + 1900 << "-" << t.tm_mon + 1 << "-" << t.tm_mday << " " ;
+            if(t.tm_hour > 10) { cout << t.tm_hour << ":";}
+            else{cout << "0" << t.tm_hour << ":";}
+            if(t.tm_min > 10) { cout << t.tm_min << ":";}
+            else{cout << "0" << t.tm_min << ":";}
+            if(t.tm_sec > 10) { cout << t.tm_sec <<endl;}
+            else{cout << "0" << t.tm_sec << endl;}
+            
+            attribute_u attr = filesystem->get_owner_permission();
+            cout << "Owner Permission : ";
+            process_attr(attr);
+            cout << endl;
+            attr = filesystem->get_group_permission();
+            cout << "Owner Group Permission : ";
+            process_attr(attr);
+            cout << endl;
+            attr = filesystem->get_other_permission();
+            cout << "Other Permission : ";
+            process_attr(attr);
+            cout << endl;
+        },
+        READ
     );
 }

@@ -31,6 +31,7 @@ enum ERROR
     NO,
     NOTDIR,
     NOTFOUND,
+    NOTTEXT,
     CMD,
 };
 
