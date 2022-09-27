@@ -115,7 +115,7 @@ void filesystem_c::set_parent(filesystem_c *_parent,bool flag)
                 parent = _parent;
                 (dynamic_cast<dir_c*>(parent))->get_contents()[get_name()] = this;
         }
-        else if(flag == false)
+        else if(parent != NULL && flag == false)
         {     
                 parent = _parent;
                 (dynamic_cast<dir_c*>(parent))->get_contents()[get_name()] = this;

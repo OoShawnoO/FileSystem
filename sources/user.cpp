@@ -217,13 +217,13 @@ bool user_c::cd(vector<string> &args)
     {
         if (args[0][1] == '.' && args[0].size() > 2)
         {
-            pos = dynamic_cast<dir_c*>(((dynamic_cast<filesystem_c*>(pos))->get_parent()));
+            pos = dynamic_cast<dir_c*>(pos->get_contents()[".."]);
             args[0].erase(0, 3);
             split(args[0], '/', vc);
         }
         else if (args[0][1] == '.')
         {
-            pos = dynamic_cast<dir_c*>(((dynamic_cast<filesystem_c*>(pos))->get_parent()));
+            pos = dynamic_cast<dir_c*>(pos->get_contents()[".."]);
         }
         else
         {

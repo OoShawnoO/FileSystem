@@ -72,7 +72,7 @@ public:
     virtual void set_createid(unsigned char);
     virtual void set_ownerid(unsigned char);
     virtual void set_ownergid(unsigned char);
-    virtual void set_parent(filesystem_c *,bool = true);
+    virtual void set_parent(filesystem_c *,bool = false);
     virtual void set_lcount(int);
     virtual bool permission(user_c *, ATTRIBUTE) const;
 };
