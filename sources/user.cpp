@@ -245,16 +245,16 @@ bool user_c::cd(vector<string> &args)
         {
             break;
         }
-
-        if (pos->get_contents().find(x) != pos->get_contents().end())
+        map<string,filesystem_c*>& contents = pos->get_contents();
+        if (contents.find(x) != contents.end())
         {
-            if (pos->get_contents()[x]->get_filetype() == DIR)
+            if (contents[x]->get_filetype() == DIR)
             {
-                pos = dynamic_cast<dir_c*>(pos->get_contents()[x]);
+                pos = dynamic_cast<dir_c*>(contents[x]);
             }
-            else if(pos->get_contents()[x]->get_filetype() == LINK 
-            && dynamic_cast<link_c*>(pos->get_contents()[x])->get_real()->get_filetype() == DIR){
-                pos = dynamic_cast<dir_c*>(dynamic_cast<link_c*>(pos->get_contents()[x])->get_real());
+            else if(contents[x]->get_filetype() == LINK 
+            && dynamic_cast<link_c*>(contents[x])->get_real()->get_filetype() == DIR){
+                pos = dynamic_cast<dir_c*>(dynamic_cast<link_c*>(contents[x])->get_real());
             }
             else
             {
@@ -340,6 +340,7 @@ bool user_c::TEMP(vector<string>& args,function<filesystem_c*(user_c*,string,fil
                 copy = cdarg(this,src,copy);
                 set_current_dir(dir);
                 if(get_error()!=NO) return false;
+                else return true;
             }
             else
             {
@@ -359,6 +360,7 @@ bool user_c::TEMP(vector<string>& args,function<filesystem_c*(user_c*,string,fil
             // TODO 拷贝该文件
             copy = cdarg(this,src,copy);
             if(get_error()!=NO) return false;
+            else return true;
         }
         else
         {
@@ -379,6 +381,7 @@ bool user_c::TEMP(vector<string>& args,function<filesystem_c*(user_c*,string,fil
                 destarg(this,dest,src,copy);
                 set_current_dir(dir);
                 if(get_error()!=NO) return false;
+                else return true;
             }
             else
             {
@@ -398,6 +401,7 @@ bool user_c::TEMP(vector<string>& args,function<filesystem_c*(user_c*,string,fil
             // TODO 将拷贝的文件放在该目录下
             destarg(this,dest,src,copy);
             if(get_error()!=NO) return false;
+            else return true;
         }
         else
         {
@@ -419,8 +423,9 @@ bool user_c::rmdir(vector<string> &args)
 {
     return TEMP(args,
     [](user_c* user,string name){
-        if(user->get_current_dir()->get_contents()[name] != NULL){
-            delete dynamic_cast<dir_c *>(user->get_current_dir()->get_contents()[name]);
+        filesystem_c* filesystem = user->get_current_dir()->get_contents()[name];
+        if(filesystem != NULL){
+            delete dynamic_cast<dir_c *>(filesystem);
         }
         else{
             user->set_error(NOTFOUND);
@@ -440,18 +445,19 @@ bool user_c::cp(vector<string> &args)
 {
     return TEMP(args,[](user_c* user,string src,filesystem_c* copy)->filesystem_c*{
         auto filesystem = user->get_current_dir()->get_contents()[src];
-        if (filesystem->get_filetype() == DIR)
+        FILETYPE type = filesystem->get_filetype();
+        if ( type == DIR)
         {
             copy = new dir_c(*dynamic_cast<dir_c *>(filesystem));
         }
-        else if (filesystem->get_filetype() == BINARY 
-        || filesystem->get_filetype() == TEXT 
-        || filesystem->get_filetype() == UNKNOWN
+        else if (type == BINARY 
+        || type == TEXT 
+        || type == UNKNOWN
         )
         {
             copy = new file_c(*dynamic_cast<file_c *>(filesystem));
         }
-        else if(filesystem->get_filetype() == LINK){
+        else if(type == LINK){
             copy = new link_c(*dynamic_cast<link_c*>(filesystem));
         }
         else
@@ -480,7 +486,7 @@ bool user_c::rm(vector<string> &args)
             }else if(type == BINARY || type == TEXT || type == UNKNOWN){
                 user->get_current_dir()->get_contents().erase(name);
                 user->get_current_dir()->set_update_time(get_time());
-                delete dynamic_cast<file_c *>(filesystem);   
+                delete dynamic_cast<file_c *>(filesystem);
             }else if(type == LINK){
                 user->get_current_dir()->get_contents().erase(name);
                 user->get_current_dir()->set_update_time(get_time());
