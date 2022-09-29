@@ -241,7 +241,7 @@ bool user_c::cd(vector<string> &args)
     for (auto x : vc)
     {
         char a = x.c_str()[0];
-        if (a == NULL)
+        if (a == 0)
         {
             break;
         }

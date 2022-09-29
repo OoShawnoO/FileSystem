@@ -43,19 +43,19 @@ public:
     filesystem_c *parent;     // 上级目录
     int lcount;               // 链接数
 
-    virtual inline FILETYPE get_filetype() const;
-    virtual inline attribute_u get_owner_permission() const;
-    virtual inline attribute_u get_group_permission() const;
-    virtual inline attribute_u get_other_permission() const;
-    virtual inline string get_name() const;
-    virtual inline unsigned char get_createid() const;
-    virtual inline unsigned char get_ownerid() const;
-    virtual inline unsigned char get_ownergid() const;
-    virtual inline tm get_create_time() const;
-    virtual inline tm get_update_time() const;
-    virtual inline tm get_visit_time() const;
-    virtual inline filesystem_c *get_parent();
-    virtual inline int get_lcount();
+    virtual FILETYPE get_filetype() const;
+    virtual attribute_u get_owner_permission() const;
+    virtual attribute_u get_group_permission() const;
+    virtual attribute_u get_other_permission() const;
+    virtual string get_name() const;
+    virtual unsigned char get_createid() const;
+    virtual unsigned char get_ownerid() const;
+    virtual unsigned char get_ownergid() const;
+    virtual tm get_create_time() const;
+    virtual tm get_update_time() const;
+    virtual tm get_visit_time() const;
+    virtual filesystem_c *get_parent();
+    virtual int get_lcount();
 
     virtual void set_create_time(tm *);
     virtual void set_update_time(tm *);
