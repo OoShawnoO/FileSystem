@@ -9,8 +9,8 @@ string cmd;
 vector<string> params;
 vector<user_c*> users;
 
-user_c* user;
-dir_c* root;
+extern user_c* user;
+extern dir_c* root;
 
 
 void split(const string& str,char splitchar,vector<string>& res);

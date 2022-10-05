@@ -611,7 +611,7 @@ bool user_c::history(vector<string> &args)
 }
 // (18) vim - 写文件
 bool user_c::vim(vector<string>& args){
-    TEMP(args,
+    return TEMP(args,
     [](user_c* user,string name){
         filesystem_c* f = user->get_current_dir()->get_contents()[name];
         if(user->get_current_dir()->get_contents()[name]->get_filetype() == LINK 
@@ -629,7 +629,11 @@ bool user_c::vim(vector<string>& args){
                 out << x;
             }
             out.close();
+            #ifdef __unix__
             system((string("vim ")+name).c_str());
+            #elif _WIN32
+            system((string("start notepad ")+name).c_str());
+            #endif
             v.clear();
             ifstream in(name);
             while(!in.eof()){
@@ -642,7 +646,11 @@ bool user_c::vim(vector<string>& args){
             }
             in.close();
             f->get_mem() = v;
+            #ifdef __unix__
             system((string("rm ")+name).c_str());
+            #elif _WIN32
+            system((string("del ")+name).c_str());
+            #endif
         }
         
     });

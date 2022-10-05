@@ -59,11 +59,12 @@ void uerror(ERROR e){
     
 }
 
+user_c* user = new user_c("root");
+
+dir_c* root = new dir_c(user,"/",NULL);
+
 int main()
 {
-    user = new user_c("root");
-
-    root = new dir_c(user,"/",NULL);
 
     user->set_current_dir(root);
 
