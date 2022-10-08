@@ -1,6 +1,8 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+// #define __Qt__
+
 #include <iostream>
 #include <string>
 #include <map>

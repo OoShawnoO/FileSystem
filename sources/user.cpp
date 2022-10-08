@@ -445,21 +445,21 @@ bool user_c::cp(vector<string> &args)
 {
     #ifdef __Qt__
     return TEMP(args,[](user_c* user,string name){
-        copyfilesystem = user->get_current_dir()->get_contents()[name];
-        FILETYPE type = copyfilesystem->get_filetype();
+        user->copyfilesystem = user->get_current_dir()->get_contents()[name];
+        FILETYPE type = user->copyfilesystem->get_filetype();
         if ( type == DIR)
         {
-            copyfilesystem = new dir_c(*dynamic_cast<dir_c *>(copyfilesystem));
+            user->copyfilesystem = new dir_c(*dynamic_cast<dir_c *>(user->copyfilesystem));
         }
         else if (type == BINARY 
         || type == TEXT 
         || type == UNKNOWN
         )
         {
-            copyfilesystem = new file_c(*dynamic_cast<file_c *>(copyfilesystem));
+            user->copyfilesystem = new file_c(*dynamic_cast<file_c *>(user->copyfilesystem));
         }
         else if(type == LINK){
-            copyfilesystem = new link_c(*dynamic_cast<link_c*>(copyfilesystem));
+            user->copyfilesystem = new link_c(*dynamic_cast<link_c*>(user->copyfilesystem));
         }
         else
         {
@@ -776,11 +776,11 @@ bool user_c::paste(vector<string>& args){
         return TEMP(args,[](user_c* user,string name){
             if (name == "")
             {
-                name = src;
+                name = name;
             }
-            copyfilesystem->set_name(name);
-            copyfilesystem->set_parent(user->get_current_dir(),false);
-        }
+            user->copyfilesystem->set_name(name);
+            user->copyfilesystem->set_parent(user->get_current_dir(),false);
+        });
     }
     else{
         return false;
