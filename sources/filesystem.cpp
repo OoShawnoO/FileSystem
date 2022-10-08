@@ -110,6 +110,7 @@ void filesystem_c::set_parent(filesystem_c *_parent,bool flag)
 {
         if (parent != NULL && flag == true)
         {
+                cout << "parent set--" <<endl;
                 (dynamic_cast<dir_c*>(parent))->get_contents().erase(this->get_name());
                 parent->set_update_time(get_time());
                 parent = _parent;

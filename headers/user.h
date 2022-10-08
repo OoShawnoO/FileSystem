@@ -15,6 +15,9 @@ private:
     dir_c *current_dir;
     int read_cursor;
     vector<string> his;
+    #ifdef __Qt__
+    filesystem_c* copyfilesystem;
+    #endif
 
 public:
     map<string, bool (user_c::*)(vector<string> &)> functions;
@@ -84,6 +87,10 @@ public:
     bool vim(vector<string>&);
     // (19) stat - 文件属性
     bool stat(vector<string>&);
+    #ifdef __Qt__
+    //(20) paste - Qt 粘贴
+    bool paste(vector<string>&);
+    #endif
 };
 
 #endif

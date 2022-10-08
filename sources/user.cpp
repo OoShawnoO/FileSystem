@@ -66,6 +66,9 @@ user_c::user_c(string _name)
     functions["history"] = &user_c::history;
     functions["vim"] = &user_c::vim;
     functions["stat"] = &user_c::stat;
+    #ifdef __Qt__
+    functions["paste"] = &user_c::paste;
+    #endif
 }
 
 user_c::~user_c()
@@ -340,7 +343,6 @@ bool user_c::TEMP(vector<string>& args,function<filesystem_c*(user_c*,string,fil
                 copy = cdarg(this,src,copy);
                 set_current_dir(dir);
                 if(get_error()!=NO) return false;
-                else return true;
             }
             else
             {
@@ -360,7 +362,6 @@ bool user_c::TEMP(vector<string>& args,function<filesystem_c*(user_c*,string,fil
             // TODO 拷贝该文件
             copy = cdarg(this,src,copy);
             if(get_error()!=NO) return false;
-            else return true;
         }
         else
         {
@@ -381,7 +382,6 @@ bool user_c::TEMP(vector<string>& args,function<filesystem_c*(user_c*,string,fil
                 destarg(this,dest,src,copy);
                 set_current_dir(dir);
                 if(get_error()!=NO) return false;
-                else return true;
             }
             else
             {
@@ -401,7 +401,6 @@ bool user_c::TEMP(vector<string>& args,function<filesystem_c*(user_c*,string,fil
             // TODO 将拷贝的文件放在该目录下
             destarg(this,dest,src,copy);
             if(get_error()!=NO) return false;
-            else return true;
         }
         else
         {
@@ -409,6 +408,7 @@ bool user_c::TEMP(vector<string>& args,function<filesystem_c*(user_c*,string,fil
             return false;
         }
     }
+    return true;
 }
 //（4）mkdir - 创建目录
 bool user_c::mkdir(vector<string> &args)
@@ -443,6 +443,29 @@ bool user_c::touch(vector<string> &args)
 //（7）cp - 拷贝文件或目录到指定文件或目录 cp source[args[0]] -> dest[args[1]]
 bool user_c::cp(vector<string> &args)
 {
+    #ifdef __Qt__
+    return TEMP(args,[](user_c* user,string name){
+        copyfilesystem = user->get_current_dir()->get_contents()[name];
+        FILETYPE type = copyfilesystem->get_filetype();
+        if ( type == DIR)
+        {
+            copyfilesystem = new dir_c(*dynamic_cast<dir_c *>(copyfilesystem));
+        }
+        else if (type == BINARY 
+        || type == TEXT 
+        || type == UNKNOWN
+        )
+        {
+            copyfilesystem = new file_c(*dynamic_cast<file_c *>(copyfilesystem));
+        }
+        else if(type == LINK){
+            copyfilesystem = new link_c(*dynamic_cast<link_c*>(copyfilesystem));
+        }
+        else
+        {
+        }
+    });
+    #else
     return TEMP(args,[](user_c* user,string src,filesystem_c* copy)->filesystem_c*{
         auto filesystem = user->get_current_dir()->get_contents()[src];
         FILETYPE type = filesystem->get_filetype();
@@ -470,8 +493,10 @@ bool user_c::cp(vector<string> &args)
             dest = src;
         }
         copy->set_name(dest);
-        copy->set_parent(user->get_current_dir(),false);
+        copy->set_parent(user->get_current_dir());
+        
     });
+    #endif
 }
 //（8）rm - 删除文件或目录
 bool user_c::rm(vector<string> &args)
@@ -744,3 +769,21 @@ bool user_c::stat(vector<string>& args){
         READ
     );
 }
+
+#ifdef __Qt__
+bool user_c::paste(vector<string>& args){
+    if(copyfilesystem != NULL){
+        return TEMP(args,[](user_c* user,string name){
+            if (name == "")
+            {
+                name = src;
+            }
+            copyfilesystem->set_name(name);
+            copyfilesystem->set_parent(user->get_current_dir(),false);
+        }
+    }
+    else{
+        return false;
+    }
+}
+#endif
