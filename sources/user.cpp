@@ -776,10 +776,11 @@ bool user_c::paste(vector<string>& args){
         return TEMP(args,[](user_c* user,string name){
             if (name == "")
             {
-                name = name;
+                name = user->copyfilesystem->get_name();
             }
             user->copyfilesystem->set_name(name);
             user->copyfilesystem->set_parent(user->get_current_dir(),false);
+            user->copyfilesystem = nullptr;
         });
     }
     else{
