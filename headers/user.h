@@ -90,6 +90,8 @@ public:
     #ifdef __Qt__
     //(20) paste - Qt 粘贴
     bool paste(vector<string>&);
+    //(21) get_pos - 获取绝对路径
+    vector<string> get_pos(filesystem_c*);
     #endif
 };
 

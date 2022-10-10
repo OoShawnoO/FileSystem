@@ -287,7 +287,7 @@ bool user_c::TEMP(vector<string>& args,function<void(user_c*,string)> cdarg,ATTR
     {
         name = args[0].substr(args[0].rfind("/") + 1);
         args[0] = args[0].substr(0, args[0].rfind("/"));
-
+        if(args[0] == "") {args[0] = "/";}
         if (cd(args))
         {
             if ((dynamic_cast<filesystem_c*>(get_current_dir()))->permission(this, attr))
@@ -335,6 +335,7 @@ bool user_c::TEMP(vector<string>& args,function<filesystem_c*(user_c*,string,fil
     {
         src = vsrc[0].substr(vsrc[0].rfind("/") + 1);
         vsrc[0] = vsrc[0].substr(0, vsrc[0].rfind("/"));
+        if(args[0] == "") {args[0] = "/";}
         if (cd(vsrc))
         {
             if ((dynamic_cast<filesystem_c*>(get_current_dir()))->permission(this, READ))
@@ -786,5 +787,29 @@ bool user_c::paste(vector<string>& args){
     else{
         return false;
     }
+}
+//(21) get_pos - 获取绝对路径
+vector<string> user_c::get_pos(filesystem_c* filesystem){
+    vector<string> vs;
+    dir_c* d = dynamic_cast<dir_c*>(filesystem->get_parent());
+    auto dir = dynamic_cast<filesystem_c*>(d);
+    if (dynamic_cast<dir_c*>(dir) == root)
+    {
+        vs.push_back("/");
+        return vs;
+    }
+    vector<string> v;
+    while (dir->get_name() != "/")
+    {
+        v.push_back(dir->get_name());
+        dir = dynamic_cast<filesystem_c*>(dir)->parent;
+        v.push_back("/");
+    }
+    for (vector<string>::reverse_iterator it = v.rbegin(); it != v.rend(); it++)
+    {
+        vs.push_back(*it);
+    }
+    vs.push_back(filesystem->get_name());
+    return vs;
 }
 #endif

@@ -34,6 +34,7 @@ enum ERROR
     NOTDIR,
     NOTFOUND,
     NOTTEXT,
+    NOTEXECABLE,
     CMD,
 };
 
