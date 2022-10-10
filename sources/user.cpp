@@ -527,10 +527,19 @@ bool user_c::rm(vector<string> &args)
 //（9）mv - 移动文件与目录或重命名
 bool user_c::mv(vector<string> &args)
 {
+#ifdef __Qt__
+    vector<string> v(args.begin(),args.begin()+1);
+    vector<string> v2(args.begin()+1,args.end());
+    if(cp(args) == false) return false;
+    if(paste(v2) == false) return false;
+    if(rm(v) == false) return false;
+    return true;
+#else
     vector<string> v(args.begin(),args.begin()+1);
     if(cp(args) == false) return false;
     if(rm(v) == false) return false;
     return true;
+#endif
 }
 //（10）cat - 查看文件内容
 bool user_c::cat(vector<string> &args)
