@@ -20,7 +20,7 @@ private:
     #endif
 
 public:
-    map<string, bool (user_c::*)(vector<string> &)> functions;
+    static map<string, bool (user_c::*)(vector<string> &)> functions;
     static unsigned char ucount;
     static unsigned char gcount;
     static unsigned char get_ucount();
@@ -93,6 +93,11 @@ public:
     //(21) get_pos - 获取绝对路径
     vector<string> get_pos(filesystem_c*);
     #endif
+
+    bool myid(vector<string>&);
+    bool mygid(vector<string>&);
+    bool login(vector<string>&);
+    bool quit(vector<string>&);
 };
 
 #endif

@@ -27,8 +27,10 @@ filesystem_c::filesystem_c(
         set_owner_permission(owenr);
         set_group_permission(group);
         set_other_permission(other);
-        set_createid(user->get_uid());
-        set_ownerid(user->get_uid());
+        
+        createrid = user->get_uid();
+        ownerid = user->get_uid();
+
         tm *t = get_time();
         create_time = new tm;
         update_time = new tm;

@@ -58,13 +58,49 @@ void uerror(ERROR e){
     }
     
 }
+map<string, bool (user_c::*)(std::vector<std::string> &)> user_c::functions;
+void InitFunctions()
+{
+    user_c::functions["ls"] = &user_c::ls;
+    user_c::functions["pwd"] = &user_c::pwd;
+    user_c::functions["cd"] = &user_c::cd;
+    user_c::functions["mkdir"] = &user_c::mkdir;
+    user_c::functions["rm"] = &user_c::rm;
+    user_c::functions["cp"] = &user_c::cp;
+    user_c::functions["touch"] = &user_c::touch;
+    user_c::functions["rmdir"] = &user_c::rmdir;
+    user_c::functions["mv"] = &user_c::mv;
+    user_c::functions["cat"] = &user_c::cat;
+    user_c::functions["more"] = &user_c::more;
+    user_c::functions["echo"] = &user_c::echo;
+    user_c::functions["head"] = &user_c::head;
+    user_c::functions["tail"] = &user_c::tail;
+    user_c::functions["dup2"] = &user_c::dup2;
+    user_c::functions["ln"] = &user_c::ln;
+    user_c::functions["history"] = &user_c::history;
+    user_c::functions["vim"] = &user_c::vim;
+    user_c::functions["stat"] = &user_c::stat;
+    user_c::functions["myid"] = &user_c::myid;
+    user_c::functions["mygid"] = &user_c::mygid;
+    user_c::functions["login"] = &user_c::login;
+    user_c::functions["quit"] = &user_c::quit;
+    #ifdef __Qt__
+    user_c::functions["paste"] = &user_c::paste;
+    #endif
+}
 
-user_c* user = new user_c("root");
+user_c* ROOT = new user_c("root");
+
+user_c* user = ROOT;
 
 dir_c* root = new dir_c(user,"/",NULL);
 
+
+
 int main()
 {
+    
+    InitFunctions();
 
     user->set_current_dir(root);
 
@@ -73,6 +109,10 @@ int main()
     root->get_contents()["dir1"] = dynamic_cast<filesystem_c*>(new dir_c(user, "dir1", dynamic_cast<filesystem_c*>(root)));
 
     users.push_back(user);
+
+    user_c* customer = new user_c("customer");
+    
+    users.push_back(customer);
 
     bool right = true;
 
@@ -91,9 +131,9 @@ int main()
         params.erase(params.begin());
         // 这里使用到的是 策略模式 这种设计模式，原因是最开始的思路 if elseif 嵌套太多 可读性差 且 实用性不高。
         // 将函数指针与cmd 进行分组 封装在一个 map 对象中，C++ map底层是红黑树 查询时间复杂度 O(log(n))
-        if (user->functions.count(first))
+        if (user_c::functions.count(first))
         {
-            auto func = user->functions[first];
+            auto func = user_c::functions[first];
             (user->*func)(params);
         }
         else

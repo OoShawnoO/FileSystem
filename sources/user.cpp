@@ -3,6 +3,9 @@
 
 #include <fstream>
 
+extern vector<user_c*> users;
+extern user_c* user;
+
 static tm *get_time(){
         time_t timer;
         timer = time(NULL);
@@ -25,8 +28,8 @@ void process_attr(attribute_u attr){
     else { cout << "- ";}
 }
 
-unsigned char user_c::ucount = 0;
-unsigned char user_c::gcount = 0;
+unsigned char user_c::ucount = 1;
+unsigned char user_c::gcount = 1;
 
 unsigned char user_c::get_ucount()
 {
@@ -40,35 +43,10 @@ unsigned char user_c::get_gcount()
 user_c::user_c(string _name)
 {
     name = _name;
-    gid = get_gcount();
-    uid = get_ucount();
-    gcount++;
-    ucount++;
+    gid = gcount++;
+    uid = ucount++;
+
     error = NO;
-    
-    functions = *new map<string, bool (user_c::*)(std::vector<std::string> &)>;
-    functions["ls"] = &user_c::ls;
-    functions["pwd"] = &user_c::pwd;
-    functions["cd"] = &user_c::cd;
-    functions["mkdir"] = &user_c::mkdir;
-    functions["rm"] = &user_c::rm;
-    functions["cp"] = &user_c::cp;
-    functions["touch"] = &user_c::touch;
-    functions["rmdir"] = &user_c::rmdir;
-    functions["mv"] = &user_c::mv;
-    functions["cat"] = &user_c::cat;
-    functions["more"] = &user_c::more;
-    functions["echo"] = &user_c::echo;
-    functions["head"] = &user_c::head;
-    functions["tail"] = &user_c::tail;
-    functions["dup2"] = &user_c::dup2;
-    functions["ln"] = &user_c::ln;
-    functions["history"] = &user_c::history;
-    functions["vim"] = &user_c::vim;
-    functions["stat"] = &user_c::stat;
-    #ifdef __Qt__
-    functions["paste"] = &user_c::paste;
-    #endif
 }
 
 user_c::~user_c()
@@ -86,7 +64,7 @@ vector<string>& user_c::get_history() {return his;}
 void user_c::set_name(string _name) { name = _name; }
 bool user_c::set_uid(unsigned char _uid)
 {
-    if (gid == 1)
+    if (gid == 1 || uid == 1)
     {
         uid = _uid;
         return true;
@@ -99,7 +77,7 @@ bool user_c::set_uid(unsigned char _uid)
 }
 bool user_c::set_gid(unsigned char _gid)
 {
-    if (gid == 1)
+    if (gid == 1 || uid == 1)
     {
         gid = _gid;
         return true;
@@ -112,7 +90,7 @@ bool user_c::set_gid(unsigned char _gid)
 }
 bool user_c::set_uid(unsigned char _uid, user_c &user)
 {
-    if (gid == 1)
+    if (gid == 1 || uid == 1)
     {
         user.uid = _uid;
         return true;
@@ -125,7 +103,7 @@ bool user_c::set_uid(unsigned char _uid, user_c &user)
 };
 bool user_c::set_gid(unsigned char _gid, user_c &user)
 {
-    if (gid == 1)
+    if (gid == 1 || uid == 1)
     {
         user.gid = _gid;
         return true;
@@ -417,7 +395,7 @@ bool user_c::mkdir(vector<string> &args)
     return TEMP(args,
     [](user_c* user,string name){
         dir_c *newdir = new dir_c(user, name, dynamic_cast<filesystem_c*>(user->get_current_dir()));
-    });
+    },ATTRIBUTE::WRITE);
 }
 //（5）rmdir - 删除目录(空目录)
 bool user_c::rmdir(vector<string> &args)
@@ -431,7 +409,7 @@ bool user_c::rmdir(vector<string> &args)
         else{
             user->set_error(NOTFOUND);
         }
-    });
+    },ATTRIBUTE::WRITE);
 }
 //（6）touch - 创建空文件
 bool user_c::touch(vector<string> &args)
@@ -439,7 +417,7 @@ bool user_c::touch(vector<string> &args)
     return TEMP(args,
     [](user_c* user,string name){
         file_c *newfile = new file_c(user, name, dynamic_cast<filesystem_c*>(user->get_current_dir()));
-    });
+    },ATTRIBUTE::WRITE);
 }
 //（7）cp - 拷贝文件或目录到指定文件或目录 cp source[args[0]] -> dest[args[1]]
 bool user_c::cp(vector<string> &args)
@@ -496,7 +474,7 @@ bool user_c::cp(vector<string> &args)
         copy->set_name(dest);
         copy->set_parent(user->get_current_dir());
         
-    });
+    },ATTRIBUTE::WRITE);
     #endif
 }
 //（8）rm - 删除文件或目录
@@ -584,9 +562,15 @@ bool user_c::more(vector<string> &args)
 //（12）echo - 输出内容到控制台
 bool user_c::echo(vector<string> &args)
 {
-    if(args.size() > 0){
-        cout << args[0] << endl;
+    if(args.size() > 0 && args.size() < 2){
+        // cout << args[0] << endl;
+        color_cout(HIGHTLIGHT,F_MAGENTA,args[0]); 
+        cout << endl;
         return true;
+    }
+    else if(args.size() >= 2)
+    {
+        return dup2(args);
     }
     return false;
 }
@@ -622,7 +606,18 @@ bool user_c::tail(vector<string> &args)
 //（15）> / >> - 输出重定向/追加
 bool user_c::dup2(vector<string> &args)
 {
+    if(args[1] != ">" && args[1] != ">>")
+    {
+        error = ERROR::CMD;
+        return false;
+    }
+    vector<string> farg(args.begin()+2,args.begin()+3);
+    return TEMP(farg,[=](user_c* user,string name){
+        auto files = user->get_current_dir()->get_contents()[name];
+        dynamic_cast<file_c*>(files)->get_mem().push_back(args[0]);
+    },ATTRIBUTE::WRITE);
     
+
 }
 //（16）ln - 软链接
 bool user_c::ln(vector<string> &args)
@@ -634,7 +629,7 @@ bool user_c::ln(vector<string> &args)
     },[](user_c* user,string dest,string src,filesystem_c* copy){
         link_c* link = new link_c(user,dest,dynamic_cast<filesystem_c*>(user->get_current_dir()));
         link->set_real(copy);
-    });
+    },ATTRIBUTE::WRITE);
 }
 //（17）history - 查看执行过的的历史命令
 bool user_c::history(vector<string> &args)
@@ -665,7 +660,11 @@ bool user_c::vim(vector<string>& args){
             }
             out.close();
             #ifdef __unix__
-            system((string("vim ")+name).c_str());
+                #ifdef __Qt__
+                system((string("gedit ")+name).c_str());
+                #else
+                system((string("vim ")+name).c_str());
+                #endif
             #elif _WIN32
             system((string("start notepad ")+name).c_str());
             #endif
@@ -688,7 +687,7 @@ bool user_c::vim(vector<string>& args){
             #endif
         }
         
-    });
+    },ATTRIBUTE::WRITE);
 }
 // (19) stat - 文件属性
 bool user_c::stat(vector<string>& args){
@@ -734,9 +733,9 @@ bool user_c::stat(vector<string>& args){
             }
             cout << "\t" << endl;
             cout << "Link : " << filesystem->get_lcount() << endl;
-            cout << "Creater_uid : " << filesystem->get_createid() << "\t";
-            cout << "Owner_uid : " << filesystem->get_ownerid() << "\t";
-            cout << "Owenr_gid : " << filesystem->get_ownergid() << "\t" <<endl;
+            cout << "Creater_uid : " << (int)filesystem->get_createid() << "\t";
+            cout << "Owner_uid : " << (int)filesystem->get_ownerid() << "\t";
+            cout << "Owenr_gid : " << (int)filesystem->get_ownergid() << "\t" <<endl;
             tm t = filesystem->get_create_time();
             cout << "Create Time : " << t.tm_year + 1900 << "-" << t.tm_mon + 1 << "-" << t.tm_mday << " " ;
             if(t.tm_hour > 10) { cout << t.tm_hour << ":";}
@@ -822,3 +821,36 @@ vector<string> user_c::get_pos(filesystem_c* filesystem){
     return vs;
 }
 #endif
+bool user_c::myid(vector<string>&)
+{
+    cout << "current user id = " << (int)uid << endl;
+    return true;
+}
+
+bool user_c::mygid(vector<string>&)
+{
+    cout << "current use group id = " << (int)gid << endl;
+    return true;
+}
+
+bool user_c::login(vector<string>& args)
+{
+    for(auto u : users)
+    {
+        if(u->name == args[0])
+        {
+            dir_c* current_dir = user->get_current_dir();
+            user = u;
+            u->current_dir = current_dir;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool user_c::quit(vector<string>&)
+{
+    color_cout(HIGHTLIGHT,F_MAGENTA,"Bye " + name + "!");
+    cout << endl;
+    exit(0);
+}
