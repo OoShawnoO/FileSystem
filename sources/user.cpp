@@ -845,6 +845,7 @@ bool user_c::login(vector<string>& args)
             return true;
         }
     }
+    error = NOUSER;
     return false;
 }
 

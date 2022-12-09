@@ -36,6 +36,7 @@ enum ERROR
     NOTTEXT,
     NOTEXECABLE,
     CMD,
+    NOUSER,
 };
 
 /*

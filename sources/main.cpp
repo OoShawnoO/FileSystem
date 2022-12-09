@@ -51,6 +51,12 @@ void uerror(ERROR e){
             break;
         }
 
+        case NOUSER : {
+            color_cout(HIGHTLIGHT,F_RED,"ERROR : No Such User .");
+            cout << endl;
+            break;
+        }
+
         default : {
             break;
         }
