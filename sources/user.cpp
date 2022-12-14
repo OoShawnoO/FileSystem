@@ -855,3 +855,45 @@ bool user_c::quit(vector<string>&)
     cout << endl;
     exit(0);
 }
+
+bool user_c::chmod(vector<string>& args)
+{
+    vector<string> tmp{args[0]};
+    return TEMP(tmp,
+    [=](user_c* user,string name){
+        filesystem_c* f = user->get_current_dir()->get_contents()[name];
+        if(f == NULL){user->set_error(NOTFOUND);return;}
+        else
+        {
+            unsigned char attr = (unsigned char)atoi(args[1].c_str());
+            if(attr == 0 && args[1] != "0") {user->set_error(ERROR::CMD); return;}
+            if(attr > 63){user->set_error(ERROR::CMD);return;}
+            if(attr & 0x1 || attr & 0x8)
+            {
+                if(!f->permission(this,CHREAD))
+                {
+                    user->set_error(PERMISSION);
+                    return;
+                }
+            }
+            else if(attr & 0x2 || attr & 0x10)
+            {
+                if(!f->permission(this,CHWRITE))
+                {
+                    user->set_error(PERMISSION);
+                    return;
+                }
+            }
+            else if(attr & 0x4 || attr & 0x20)
+            {
+                if(!f->permission(this,CHEXEC))
+                {
+                    user->set_error(PERMISSION);
+                    return;
+                }
+            }
+            
+            f->set_other_permission(attr);
+        }
+    });
+}

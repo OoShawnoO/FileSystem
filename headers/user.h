@@ -98,6 +98,7 @@ public:
     bool mygid(vector<string>&);
     bool login(vector<string>&);
     bool quit(vector<string>&);
+    bool chmod(vector<string>&);
 };
 
 #endif

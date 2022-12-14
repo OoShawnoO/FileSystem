@@ -90,6 +90,7 @@ void InitFunctions()
     user_c::functions["mygid"] = &user_c::mygid;
     user_c::functions["login"] = &user_c::login;
     user_c::functions["quit"] = &user_c::quit;
+    user_c::functions["chmod"] = &user_c::chmod;
     #ifdef __Qt__
     user_c::functions["paste"] = &user_c::paste;
     #endif
