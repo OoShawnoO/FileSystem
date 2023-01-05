@@ -204,7 +204,7 @@ bool filesystem_c::permission(user_c *user, ATTRIBUTE attr) const
                         return false;
         }
 }
-
+                
 file_c::file_c(
     user_c *user, string name, filesystem_c *parent,
     unsigned char owner_permission,
@@ -214,8 +214,8 @@ file_c::file_c(
         size = 0;
         ptr_mem = new vector<string>;
         mem = *ptr_mem;
-        mem.push_back("213123");
-        mem.push_back("assdasda");
+        mem.push_back("这是一个文件");
+        mem.push_back("内容内容内容内容");
         (dynamic_cast<dir_c*>(parent))->get_contents()[name] = this;
 }
 

@@ -525,10 +525,11 @@ bool user_c::cat(vector<string> &args)
     return TEMP(args,
     [](user_c* user,string name){
         filesystem_c* f = user->get_current_dir()->get_contents()[name];
+        if(f->type == LINK) f = dynamic_cast<link_c*>(f)->get_real();
         if(f == NULL){user->set_error(NOTFOUND);}
         else if(f->get_filetype() != TEXT) {user->set_error(NOTTEXT);}
         else{
-            file_c* file = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+            file_c* file = dynamic_cast<file_c*>(f);
             vector<string>& v = file->get_mem();
             vector<string>::iterator it = v.begin();
             for(;it != v.end() && it != v.begin() + 10;it ++){
@@ -643,15 +644,13 @@ bool user_c::history(vector<string> &args)
 bool user_c::vim(vector<string>& args){
     return TEMP(args,
     [](user_c* user,string name){
-        filesystem_c* f = user->get_current_dir()->get_contents()[name];
-        if(user->get_current_dir()->get_contents()[name]->get_filetype() == LINK 
-        && dynamic_cast<link_c*>(user->get_current_dir()->get_contents()[name])->get_real()->get_filetype() == TEXT
-        ){
-            f = dynamic_cast<file_c*>(dynamic_cast<link_c*>(user->get_current_dir()->get_contents()[name])->get_real());
+        filesystem_c* fs = user->get_current_dir()->get_contents()[name];
+        if(fs->get_filetype() == LINK){
+            fs = dynamic_cast<link_c*>(user->get_current_dir()->get_contents()[name])->get_real();
         }
 
-        if( f->get_filetype() == TEXT){
-            file_c* f = dynamic_cast<file_c*>(user->get_current_dir()->get_contents()[name]);
+        if( fs->get_filetype() == TEXT){
+            file_c* f = dynamic_cast<file_c*>(fs);
             f->set_update_time(get_time());
             vector<string> v = f->get_mem();
             ofstream out(name);
@@ -659,6 +658,7 @@ bool user_c::vim(vector<string>& args){
                 out << x;
             }
             out.close();
+            
             #ifdef __unix__
                 #ifdef __Qt__
                 system((string("gedit ")+name).c_str());

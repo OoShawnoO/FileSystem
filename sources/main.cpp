@@ -32,31 +32,26 @@ void uerror(ERROR e){
             cout << endl;
             break;
         }
-
         case NOTDIR : {
             color_cout(HIGHTLIGHT,F_RED,"ERROR : Its not a dir .");
             cout << endl;
             break;
         }
-        
         case NOTFOUND : {
             color_cout(HIGHTLIGHT,F_RED,"ERROR : File not found .");
             cout << endl;
             break;
         }
-        
         case CMD : {
             color_cout(HIGHTLIGHT,F_RED,"ERROR : Unknown command .");
             cout << endl;
             break;
         }
-
         case NOUSER : {
             color_cout(HIGHTLIGHT,F_RED,"ERROR : No Such User .");
             cout << endl;
             break;
         }
-
         default : {
             break;
         }
